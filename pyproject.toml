@@ -1,0 +1,34 @@
+[build-system]
+requires = ["setuptools>=45", "wheel"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "book-notes-mcp"
+version = "0.1.0"
+description = "Personal AI knowledge system for physical book reading"
+requires-python = ">=3.11"
+dependencies = [
+    "mcp[cli]>=1.5.0",
+    "litellm>=1.40.0",
+    "supabase>=2.4.0",
+    "python-dotenv>=1.0.0",
+    "rich>=13.7.0",
+    "tenacity>=8.2.3",
+]
+
+[project.optional-dependencies]
+dev = [
+    "pytest>=8.0.0",
+    "pytest-asyncio>=0.23.0",
+    "pytest-mock>=3.12.0",
+]
+
+[project.scripts]
+book-notes = "book_server.server:entrypoint"
+
+[tool.setuptools.packages.find]
+where = ["."]
+
+[tool.pytest.ini_options]
+asyncio_mode = "auto"
+testpaths = ["tests"]
