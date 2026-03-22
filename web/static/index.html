@@ -1,0 +1,723 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover" />
+  <title>Book Notes</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet" />
+  <style>
+    /* ── Reset & tokens ───────────────────────────────────────── */
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+    :root {
+      /* Refined Dark Theme Palette */
+      --bg: #030712; /* Deepest blue-black */
+      --surface: rgba(17, 24, 39, 0.6); /* Translucent slate */
+      --surface-solid: #111827;
+      --surface2: rgba(31, 41, 55, 0.5); /* Lighter translucent */
+      --surface3: rgba(55, 65, 81, 0.4);
+      --border: rgba(255, 255, 255, 0.08);
+      --border-highlight: rgba(255, 255, 255, 0.15);
+      
+      /* Vibrant Accents */
+      --accent1: #8b5cf6; /* Violet */
+      --accent2: #3b82f6; /* Blue */
+      --accent3: #ec4899; /* Pink */
+      --accent-g: linear-gradient(135deg, var(--accent1), var(--accent2));
+      --accent-g-warm: linear-gradient(135deg, var(--accent3), var(--accent1));
+      
+      /* Semantic Colors */
+      --green: #10b981;
+      --green-bg: rgba(16, 185, 129, 0.1);
+      --yellow: #f59e0b;
+      --yellow-bg: rgba(245, 158, 11, 0.1);
+      --red: #ef4444;
+      --red-bg: rgba(239, 68, 68, 0.1);
+      
+      /* Typography */
+      --text1: #f9fafb;
+      --text2: #9ca3af;
+      --text3: #6b7280;
+      
+      /* Geometry & Effects */
+      --radius-lg: 20px;
+      --radius: 16px;
+      --radius-sm: 10px;
+      --shadow-sm: 0 4px 6px -1px rgba(0, 0, 0, 0.3);
+      --shadow: 0 10px 30px -5px rgba(0, 0, 0, 0.5);
+      --shadow-glow: 0 0 20px rgba(139, 92, 246, 0.2);
+      --backdrop: blur(16px);
+      --nav-h: 72px;
+    }
+
+    /* Global */
+    html, body { 
+      height: 100%; 
+      font-family: 'Inter', system-ui, sans-serif; 
+      background: var(--bg); 
+      color: var(--text1); 
+      overflow: hidden;
+      -webkit-font-smoothing: antialiased;
+    }
+
+    /* Background decorative blobs */
+    body::before, body::after {
+      content: '';
+      position: absolute;
+      width: 300px;
+      height: 300px;
+      border-radius: 50%;
+      filter: blur(100px);
+      opacity: 0.15;
+      z-index: -1;
+      pointer-events: none;
+    }
+    body::before {
+      top: -100px; left: -100px;
+      background: var(--accent1);
+    }
+    body::after {
+      bottom: 20%; right: -100px;
+      background: var(--accent2);
+    }
+
+    /* ── Layout ───────────────────────────────────────────────── */
+    #app { display: flex; flex-direction: column; height: 100dvh; position: relative; }
+
+    /* Header */
+    header {
+      background: var(--surface);
+      backdrop-filter: var(--backdrop);
+      -webkit-backdrop-filter: var(--backdrop);
+      border-bottom: 1px solid var(--border);
+      padding: 16px 20px 12px;
+      display: flex; align-items: center; gap: 14px;
+      flex-shrink: 0;
+      z-index: 10;
+    }
+    .logo { 
+      width: 36px; height: 36px; 
+      background: var(--accent-g); 
+      border-radius: 12px; 
+      display: grid; place-items: center; 
+      font-size: 18px; 
+      box-shadow: 0 4px 12px rgba(139, 92, 246, 0.3);
+      flex-shrink:0; 
+    }
+    header .title-group { display: flex; flex-direction: column; }
+    header h1 { font-size: 18px; font-weight: 700; letter-spacing: -0.02em; line-height: 1.2; }
+    header .subtitle { font-size: 12px; color: var(--text2); font-weight: 500; }
+    
+    .sync-badge { 
+      margin-left: auto; 
+      background: var(--green-bg); 
+      border: 1px solid rgba(16,185,129,0.2); 
+      color: var(--green); 
+      font-size: 11px; font-weight: 600; 
+      padding: 4px 10px; border-radius: 20px; 
+      display: flex; align-items: center; gap: 4px;
+      box-shadow: 0 0 10px rgba(16,185,129,0.1);
+    }
+    .sync-badge::before {
+      content: ''; display: block; width: 6px; height: 6px;
+      background: currentColor; border-radius: 50%;
+    }
+
+    /* Scroll area */
+    main { 
+      flex: 1; overflow-y: auto; overflow-x: hidden;
+      padding: 20px; 
+      -webkit-overflow-scrolling: touch; 
+      scrollbar-width: none; /* Firefox */
+    }
+    main::-webkit-scrollbar { display: none; } /* Chrome/Safari */
+
+    /* Tab panels */
+    .tab { 
+      display: none; 
+      animation: fadeIn 0.3s ease-out forwards;
+      opacity: 0;
+      transform: translateY(10px);
+    }
+    .tab.active { display: block; }
+    
+    @keyframes fadeIn {
+      to { opacity: 1; transform: translateY(0); }
+    }
+
+    /* Bottom nav */
+    nav {
+      height: var(--nav-h); flex-shrink: 0;
+      background: var(--surface);
+      backdrop-filter: var(--backdrop);
+      -webkit-backdrop-filter: var(--backdrop);
+      border-top: 1px solid var(--border);
+      display: flex; align-items: stretch;
+      padding-bottom: env(safe-area-inset-bottom);
+      z-index: 10;
+    }
+    nav button {
+      flex: 1; background: none; border: none; cursor: pointer;
+      display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 6px;
+      color: var(--text3); font-size: 11px; font-weight: 600; font-family: inherit;
+      transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+      -webkit-tap-highlight-color: transparent;
+      position: relative;
+    }
+    nav button .icon { font-size: 22px; line-height:1; transition: transform 0.2s; }
+    nav button.active { color: var(--text1); }
+    nav button.active .icon { 
+      transform: translateY(-2px);
+      filter: drop-shadow(0 2px 8px rgba(255,255,255,0.2)); 
+    }
+    /* Active indicator dot */
+    nav button::after {
+      content: ''; position: absolute; top: 0; left: 50%; transform: translateX(-50%);
+      width: 0; height: 3px; border-radius: 0 0 4px 4px;
+      background: var(--accent-g);
+      transition: width 0.2s;
+    }
+    nav button.active::after { width: 30%; }
+
+
+    /* ── Cards (Glassmorphism) ────────────────────────────────── */
+    .card {
+      background: var(--surface2);
+      backdrop-filter: blur(12px);
+      -webkit-backdrop-filter: blur(12px);
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+      padding: 18px;
+      margin-bottom: 16px;
+      box-shadow: var(--shadow-sm);
+      transition: transform 0.2s, border-color 0.2s, box-shadow 0.2s;
+    }
+    .card:active { transform: scale(0.98); border-color: var(--border-highlight); }
+    
+    .card-header { display: flex; align-items: flex-start; gap: 12px; margin-bottom: 12px; }
+    .card-icon { 
+      width: 40px; height: 40px; 
+      border-radius: 12px; 
+      display: grid; place-items: center; 
+      font-size: 20px; flex-shrink:0; 
+      box-shadow: inset 0 2px 4px rgba(255,255,255,0.1);
+    }
+    .card-icon.book { background: linear-gradient(135deg, rgba(124,58,237,0.2), rgba(124,58,237,0.05)); border: 1px solid rgba(124,58,237,0.1); }
+    .card-icon.keep { background: linear-gradient(135deg, rgba(245,158,11,0.2), rgba(245,158,11,0.05)); border: 1px solid rgba(245,158,11,0.1); }
+    
+    .card-meta { flex:1; min-width:0; }
+    .card-title { font-size: 15px; font-weight: 600; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; color: var(--text1); margin-bottom: 2px;}
+    .card-sub { font-size: 12px; color: var(--text2); }
+    
+    .card-body { font-size: 14px; color: var(--text2); line-height: 1.6; }
+    .card-body.collapsed { display: -webkit-box; -webkit-line-clamp: 3; line-clamp: 3; -webkit-box-orient: vertical; overflow: hidden; }
+    .card-footer { margin-top: 14px; display: flex; flex-wrap: wrap; gap: 8px; }
+
+    /* Tags */
+    .tag {
+      background: rgba(139, 92, 246, 0.1); 
+      border: 1px solid rgba(139, 92, 246, 0.2);
+      color: #c4b5fd; font-size: 11px; font-weight: 500;
+      padding: 4px 10px; border-radius: 20px; cursor: pointer;
+      transition: all 0.2s;
+    }
+    .tag:hover { background: rgba(139, 92, 246, 0.2); border-color: rgba(139, 92, 246, 0.4); }
+    .tag.active { 
+      background: var(--accent-g); 
+      border-color: transparent; 
+      color: #fff; 
+      box-shadow: 0 2px 8px rgba(139, 92, 246, 0.3);
+    }
+
+    /* ── Inputs ───────────────────────────────────────────────── */
+    .input-group { margin-bottom: 16px; }
+    label { 
+      display: block; font-size: 12px; font-weight: 600; color: var(--text2); 
+      margin-bottom: 8px; 
+    }
+    textarea, input[type=text] {
+      width: 100%; 
+      background: var(--surface2); 
+      border: 1px solid var(--border);
+      border-radius: var(--radius-sm); 
+      color: var(--text1); font-family: inherit; font-size: 15px; line-height: 1.5;
+      padding: 14px 16px; 
+      transition: all 0.2s; outline: none; resize: vertical;
+      box-shadow: inset 0 2px 4px rgba(0,0,0,0.1);
+    }
+    textarea::placeholder, input[type=text]::placeholder { color: var(--text3); }
+    textarea:focus, input[type=text]:focus { 
+      border-color: var(--accent1); 
+      background: var(--surface-solid);
+      box-shadow: 0 0 0 3px rgba(139, 92, 246, 0.15);
+    }
+    textarea { min-height: 160px; }
+
+    /* ── Buttons ──────────────────────────────────────────────── */
+    .btn {
+      width: 100%; padding: 16px; border: none; border-radius: var(--radius-sm);
+      font-family: inherit; font-size: 16px; font-weight: 600; cursor: pointer;
+      transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1); -webkit-tap-highlight-color: transparent;
+      display: flex; align-items: center; justify-content: center; gap: 8px;
+    }
+    .btn:active { transform: scale(.98); }
+    .btn-primary { 
+      background: var(--accent-g); color: #fff; 
+      box-shadow: 0 4px 12px rgba(139, 92, 246, 0.2);
+    }
+    .btn-primary:hover { box-shadow: 0 6px 16px rgba(139, 92, 246, 0.3); filter: brightness(1.05); }
+    .btn-secondary { background: var(--surface3); color: var(--text1); border: 1px solid var(--border); }
+    .btn:disabled { opacity: .6; cursor: not-allowed; transform: none; box-shadow: none; filter: grayscale(0.2); }
+
+    /* ── Section titles ───────────────────────────────────────── */
+    .section-title { 
+      font-size: 12px; font-weight: 600; color: var(--text2); text-transform: uppercase; letter-spacing: 0.1em; 
+      margin: 20px 0 12px; display: flex; align-items: center; gap: 12px; 
+    }
+    .section-title::after { content:''; flex:1; height:1px; background: linear-gradient(90deg, var(--border), transparent); }
+
+    /* ── Status messages ──────────────────────────────────────── */
+    .status { 
+      font-size: 14px; font-weight: 500; padding: 14px 16px; border-radius: var(--radius-sm); 
+      margin-bottom: 16px; display: flex; align-items: center; gap: 10px;
+      animation: slideDown 0.3s ease-out;
+    }
+    @keyframes slideDown { from { opacity: 0; transform: translateY(-10px); } to { opacity: 1; transform: translateY(0); }}
+    
+    .status.loading { background: rgba(59, 130, 246, 0.1); border: 1px solid rgba(59, 130, 246, 0.2); color: #60a5fa; }
+    .status.success { background: var(--green-bg); border: 1px solid rgba(16,185,129,0.2); color: #34d399; }
+    .status.error   { background: var(--red-bg); border: 1px solid rgba(239,68,68,0.2); color: #f87171; }
+
+    /* ── Answer block (Ask AI) ────────────────────────────────── */
+    .answer-box {
+      background: linear-gradient(180deg, var(--surface2) 0%, var(--surface) 100%);
+      border: 1px solid var(--border); border-radius: var(--radius-lg);
+      padding: 20px; margin-bottom: 20px;
+      position: relative; overflow: hidden;
+      box-shadow: var(--shadow-sm);
+    }
+    /* Decorative AI glow inside answer box */
+    .answer-box::before {
+      content: ''; position: absolute; top: -20px; left: -20px; width: 100px; height: 100px;
+      background: radial-gradient(circle, rgba(139,92,246,0.2) 0%, transparent 70%);
+      pointer-events: none;
+    }
+    .answer-box h3 { font-size: 13px; color: var(--accent1); text-transform: uppercase; letter-spacing: .08em; margin-bottom: 12px; display:flex; align-items:center; gap:8px;}
+    .answer-box h3::before { content: '✨'; font-size: 16px; }
+    .answer-text { font-size: 15px; line-height: 1.7; white-space: pre-wrap; color: var(--text1); }
+
+    /* Similarity badge */
+    .sim-badge { 
+      font-size: 11px; font-weight: 700; padding: 3px 8px; border-radius: 6px; 
+      background: var(--surface3); border: 1px solid var(--border);
+    }
+
+    /* ── Spinner ──────────────────────────────────────────────── */
+    .spinner { 
+      display: inline-block; width: 18px; height: 18px; 
+      border: 2px solid rgba(255,255,255,.2); border-top-color: #fff; 
+      border-radius: 50%; animation: spin 0.8s cubic-bezier(0.4, 0, 0.2, 1) infinite; 
+    }
+    @keyframes spin { to { transform: rotate(360deg); } }
+
+    /* ── Tag filter container ─────────────────────────────────── */
+    .tag-filters { 
+      display: flex; flex-wrap: nowrap; gap: 8px; margin-bottom: 16px; 
+      overflow-x: auto; padding-bottom: 4px;
+      scrollbar-width: none;
+      -webkit-overflow-scrolling: touch;
+    }
+    .tag-filters::-webkit-scrollbar { display: none; }
+    .tag-filters .tag { flex-shrink: 0; padding: 6px 14px; font-size: 13px; }
+
+    /* ── Empty state ──────────────────────────────────────────── */
+    .empty { text-align: center; padding: 60px 20px; color: var(--text2); }
+    .empty .icon { font-size: 56px; margin-bottom: 16px; opacity: 0.8; filter: grayscale(0.5); }
+    .empty p { font-size: 15px; line-height: 1.5; }
+
+    /* ── Expand toggle ────────────────────────────────────────── */
+    .expand-btn { 
+      background: rgba(255,255,255,0.03); border: 1px solid transparent; 
+      color: var(--text2); font-size: 13px; font-weight: 500; font-family:inherit; 
+      cursor: pointer; padding: 6px 12px; margin-top: 10px; border-radius: 6px;
+      transition: all 0.2s; display: inline-flex; align-items: center; gap: 4px;
+    }
+    .expand-btn:hover { background: rgba(255,255,255,0.06); color: var(--text1); }
+
+    /* ── Process result structured data ───────────────────────── */
+    .result-section { margin-top: 12px; background: rgba(0,0,0,0.2); padding: 12px; border-radius: 8px;}
+    .result-section h4 { font-size: 12px; color: var(--accent1); text-transform: uppercase; letter-spacing: .08em; margin-bottom: 8px; }
+    .idea-item { font-size: 14px; color: var(--text1); padding: 8px 0; border-bottom: 1px solid var(--border); line-height: 1.5; display: flex; align-items: flex-start; gap: 8px; }
+    .idea-item:last-child { border-bottom: none; }
+    .idea-item::before { content: '•'; color: var(--accent1); font-size: 18px; line-height: 1; }
+
+    /* ── Divider ──────────────────────────────────────────────── */
+    .divider { height:1px; background: linear-gradient(90deg, transparent, var(--border), transparent); margin: 24px 0; }
+
+    /* ── Source chips (Add Note Tab) ──────────────────────────── */
+    .source-selector { display: flex; gap: 10px; margin-bottom: 8px; }
+    .source-chip { 
+      flex: 1; padding: 10px; 
+      background: var(--surface2); border: 1px solid var(--border); border-radius: var(--radius-sm); 
+      text-align: center; font-size: 13px; font-weight: 600; cursor: pointer; 
+      transition: all 0.2s; color: var(--text2);
+      display: flex; flex-direction: column; align-items: center; gap: 4px;
+    }
+    .source-chip .icon { font-size: 18px; }
+    .source-chip.active { 
+      background: rgba(139, 92, 246, 0.15); 
+      border-color: rgba(139, 92, 246, 0.5); 
+      color: #fff; 
+      box-shadow: 0 4px 12px rgba(139, 92, 246, 0.15);
+    }
+  </style>
+</head>
+<body>
+<div id="app">
+
+  <!-- Header -->
+  <header>
+    <div class="logo">✦</div>
+    <div class="title-group">
+      <h1>Book Notes</h1>
+      <div class="subtitle">AI Knowledge Base</div>
+    </div>
+    <span class="sync-badge" id="syncBadge">Live</span>
+  </header>
+
+  <!-- Scrollable content -->
+  <main id="mainContent">
+
+    <!-- ── Tab: Add Note ─────────────────────────────────── -->
+    <div class="tab active" id="tab-add">
+      <div class="input-group">
+        <label>Source</label>
+        <div class="source-selector">
+          <div class="source-chip active" data-source="manual" onclick="selectSource(this)">
+            <span class="icon">✍️</span><span>Manual</span>
+          </div>
+          <div class="source-chip" data-source="keep" onclick="selectSource(this)">
+            <span class="icon">📌</span><span>Keep</span>
+          </div>
+        </div>
+      </div>
+      <div class="input-group">
+        <label>Note text</label>
+        <textarea id="noteText" placeholder="Paste text from Google Keep, type notes, or paste OCR text from a book photo…"></textarea>
+      </div>
+      <button class="btn btn-primary" id="processBtn" onclick="processNote()">Process Note</button>
+      <div id="processResult"></div>
+    </div>
+
+    <!-- ── Tab: Ask AI ───────────────────────────────────── -->
+    <div class="tab" id="tab-ask">
+      <div class="input-group">
+        <label>Your question</label>
+        <textarea id="askText" placeholder="What have I read about habits?&#10;What did I learn about decision making?&#10;Summarise what I know about focus…" style="min-height:100px;"></textarea>
+      </div>
+      <button class="btn btn-primary" id="askBtn" onclick="askAI()">Ask AI</button>
+      <div id="askResult"></div>
+    </div>
+
+    <!-- ── Tab: Search ───────────────────────────────────── -->
+    <div class="tab" id="tab-search">
+      <div class="input-group">
+        <label>Semantic search</label>
+        <input type="text" id="searchText" placeholder="compound interest, decision making, habits…" onkeydown="if(event.key==='Enter') doSearch()" />
+      </div>
+      <button class="btn btn-primary" onclick="doSearch()">Search</button>
+      <div id="searchResult" style="margin-top:16px;"></div>
+    </div>
+
+    <!-- ── Tab: Browse ───────────────────────────────────── -->
+    <div class="tab" id="tab-browse">
+      <div class="tag-filters" id="tagFilters"></div>
+      <div id="browseResult"></div>
+    </div>
+
+  </main>
+
+  <!-- Bottom nav -->
+  <nav>
+    <button class="active" onclick="switchTab('add', this)">
+      <span class="icon">✏️</span>Add Note
+    </button>
+    <button onclick="switchTab('ask', this)">
+      <span class="icon">💬</span>Ask AI
+    </button>
+    <button onclick="switchTab('search', this)">
+      <span class="icon">🔍</span>Search
+    </button>
+    <button onclick="switchTab('browse', this)">
+      <span class="icon">📚</span>Browse
+    </button>
+  </nav>
+
+</div>
+
+<script>
+  // ── Config ──────────────────────────────────────────────────────
+  const API = '';  // same origin — empty = relative URLs
+
+  // ── State ───────────────────────────────────────────────────────
+  let currentSource = 'manual';
+  let activeTag = null;
+  let allNotes = [];
+
+  // ── Tab switching ────────────────────────────────────────────────
+  function switchTab(name, btn) {
+    document.querySelectorAll('.tab').forEach(t => t.classList.remove('active'));
+    document.querySelectorAll('nav button').forEach(b => b.classList.remove('active'));
+    document.getElementById('tab-' + name).classList.add('active');
+    btn.classList.add('active');
+    if (name === 'browse') loadBrowse();
+  }
+
+  // ── Source selector ──────────────────────────────────────────────
+  function selectSource(el) {
+    document.querySelectorAll('.source-chip').forEach(c => c.classList.remove('active'));
+    el.classList.add('active');
+    currentSource = el.dataset.source;
+  }
+
+  // ── Utilities ────────────────────────────────────────────────────
+  function timeAgo(iso) {
+    if (!iso) return '';
+    const d = new Date(iso), now = new Date();
+    const s = Math.round((now - d) / 1000);
+    if (s < 60) return 'just now';
+    if (s < 3600) return Math.floor(s/60) + 'm ago';
+    if (s < 86400) return Math.floor(s/3600) + 'h ago';
+    return Math.floor(s/86400) + 'd ago';
+  }
+
+  function simColor(score) {
+    if (score >= 0.7) return '#10b981';
+    if (score >= 0.5) return '#f59e0b';
+    return '#94a3b8';
+  }
+
+  function tagChips(tags) {
+    if (!tags || !tags.length) return '';
+    return tags.slice(0,5).map(t =>
+      `<span class="tag" onclick="filterByTag('${t}')">#${t}</span>`
+    ).join('');
+  }
+
+  function setBtn(id, loading, text) {
+    const btn = document.getElementById(id);
+    btn.disabled = loading;
+    btn.innerHTML = loading ? `<span class="spinner"></span>${text}` : text;
+  }
+
+  // ── Process Note ─────────────────────────────────────────────────
+  async function processNote() {
+    const text = document.getElementById('noteText').value.trim();
+    if (!text) return;
+
+    setBtn('processBtn', true, 'Processing…');
+    document.getElementById('processResult').innerHTML =
+      '<div class="status loading">🧠 Summarising and extracting insights…</div>';
+
+    try {
+      const res = await fetch(`${API}/api/process`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ raw_text: text, source: currentSource })
+      });
+      const data = await res.json();
+      if (!res.ok) throw new Error(data.detail || 'Error');
+
+      const ideasHTML = (data.ideas || []).map(i =>
+        `<div class="idea-item">${i}</div>`
+      ).join('');
+      const actionsHTML = (data.actions || []).map(a =>
+        `<div class="idea-item">${a}</div>`
+      ).join('');
+
+      document.getElementById('processResult').innerHTML = `
+        <div class="divider"></div>
+        <div class="status success">✅ Note stored successfully!</div>
+        <div class="card">
+          <div class="card-header">
+            <div class="card-icon book">📖</div>
+            <div class="card-meta">
+              <div class="card-title">${data.book_title || 'Unknown book'}</div>
+              <div class="card-sub">${(data.tags||[]).slice(0,4).map(t=>'#'+t).join(' ')}</div>
+            </div>
+          </div>
+          <div class="card-body">${data.summary || ''}</div>
+          <div class="result-section">
+            ${ideasHTML ? '<h4>Key Ideas</h4>' + ideasHTML : ''}
+            ${actionsHTML ? '<h4>Action Items</h4>' + actionsHTML : ''}
+          </div>
+          <div class="card-footer">${tagChips(data.tags)}</div>
+        </div>`;
+      document.getElementById('noteText').value = '';
+    } catch (e) {
+      document.getElementById('processResult').innerHTML =
+        `<div class="status error">❌ ${e.message}</div>`;
+    }
+    setBtn('processBtn', false, 'Process Note');
+  }
+
+  // ── Ask AI ───────────────────────────────────────────────────────
+  async function askAI() {
+    const q = document.getElementById('askText').value.trim();
+    if (!q) return;
+
+    setBtn('askBtn', true, 'Thinking…');
+    document.getElementById('askResult').innerHTML =
+      '<div class="status loading">🤖 Searching your notes and generating answer…</div>';
+
+    try {
+      const res = await fetch(`${API}/api/ask`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ question: q })
+      });
+      const data = await res.json();
+      if (!res.ok) throw new Error(data.detail || 'Error');
+
+      const sourcesHTML = (data.sources || []).map(s => `
+        <div class="card" style="margin-bottom:8px; padding:12px;">
+          <div style="display:flex; align-items:center; gap:8px;">
+            <span style="font-size:13px; font-weight:500; flex:1;">${s.book_title || 'Unknown book'}</span>
+            <span class="sim-badge" style="color:${simColor(s.similarity)}">${Math.round(s.similarity*100)}%</span>
+          </div>
+        </div>`).join('');
+
+      document.getElementById('askResult').innerHTML = `
+        <div class="divider"></div>
+        <div class="answer-box">
+          <h3>Answer</h3>
+          <div class="answer-text">${data.answer || 'No answer found.'}</div>
+        </div>
+        ${sourcesHTML ? '<div class="section-title">Sources</div>' + sourcesHTML : ''}`;
+    } catch (e) {
+      document.getElementById('askResult').innerHTML =
+        `<div class="status error">❌ ${e.message}</div>`;
+    }
+    setBtn('askBtn', false, 'Ask AI');
+  }
+
+  // ── Search ───────────────────────────────────────────────────────
+  async function doSearch() {
+    const q = document.getElementById('searchText').value.trim();
+    if (!q) return;
+
+    document.getElementById('searchResult').innerHTML =
+      '<div class="status loading">🔍 Searching…</div>';
+
+    try {
+      const res = await fetch(`${API}/api/search`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ query: q, limit: 8, threshold: 0.3 })
+      });
+      const data = await res.json();
+      if (!res.ok) throw new Error(data.detail || 'Error');
+
+      const results = data.results || [];
+      if (!results.length) {
+        document.getElementById('searchResult').innerHTML =
+          '<div class="empty"><div class="icon">🔭</div><p>No matches found. Try a different query.</p></div>';
+        return;
+      }
+
+      document.getElementById('searchResult').innerHTML = results.map(r => `
+        <div class="card">
+          <div class="card-header">
+            <div class="card-icon book">📖</div>
+            <div class="card-meta">
+              <div class="card-title">${r.book_title || 'Unknown book'}</div>
+              <div class="card-sub">${timeAgo(r.created_at)}</div>
+            </div>
+            <span class="sim-badge" style="color:${simColor(r.similarity)}">${Math.round(r.similarity*100)}% match</span>
+          </div>
+          <div class="card-body">${r.summary || ''}</div>
+          <div class="card-footer">${tagChips(r.tags)}</div>
+        </div>`).join('');
+    } catch (e) {
+      document.getElementById('searchResult').innerHTML =
+        `<div class="status error">❌ ${e.message}</div>`;
+    }
+  }
+
+  // ── Browse ───────────────────────────────────────────────────────
+  async function loadBrowse() {
+    document.getElementById('browseResult').innerHTML =
+      '<div class="status loading">Loading your notes…</div>';
+    try {
+      const url = activeTag
+        ? `${API}/api/notes?limit=50&tag=${encodeURIComponent(activeTag)}`
+        : `${API}/api/notes?limit=50`;
+      const res = await fetch(url);
+      const data = await res.json();
+      allNotes = data.notes || [];
+      renderNotes(allNotes);
+      buildTagFilters(allNotes);
+    } catch (e) {
+      document.getElementById('browseResult').innerHTML =
+        `<div class="status error">❌ ${e.message}</div>`;
+    }
+  }
+
+  function buildTagFilters(notes) {
+    const tagCounts = {};
+    notes.forEach(n => (n.tags || []).forEach(t => tagCounts[t] = (tagCounts[t]||0)+1));
+    const sorted = Object.entries(tagCounts).sort((a,b)=>b[1]-a[1]).slice(0,12);
+    document.getElementById('tagFilters').innerHTML = [
+      `<span class="tag ${!activeTag?'active':''}" onclick="filterByTag(null)">All (${notes.length})</span>`,
+      ...sorted.map(([t,c]) =>
+        `<span class="tag ${activeTag===t?'active':''}" onclick="filterByTag('${t}')">#${t} (${c})</span>`)
+    ].join('');
+  }
+
+  function filterByTag(tag) {
+    activeTag = tag;
+    loadBrowse();
+  }
+
+  function renderNotes(notes) {
+    if (!notes.length) {
+      document.getElementById('browseResult').innerHTML =
+        '<div class="empty"><div class="icon">📭</div><p>No notes yet. Add your first note!</p></div>';
+      return;
+    }
+    document.getElementById('browseResult').innerHTML = notes.map((n, i) => `
+      <div class="card" id="note-${i}">
+        <div class="card-header">
+          <div class="card-icon ${n.source==='keep'?'keep':'book'}">${n.source==='keep'?'📌':'📖'}</div>
+          <div class="card-meta">
+            <div class="card-title">${n.book_title || 'Untitled note'}</div>
+            <div class="card-sub">${timeAgo(n.created_at)} · via ${n.source || 'manual'}</div>
+          </div>
+        </div>
+        <div class="card-body collapsed" id="body-${i}">${n.summary || ''}</div>
+        <button class="expand-btn" onclick="toggleExpand(${i})">Show more ↓</button>
+        <div class="card-footer">${tagChips(n.tags)}</div>
+      </div>`).join('');
+  }
+
+  function toggleExpand(i) {
+    const body = document.getElementById(`body-${i}`);
+    const btn = body.nextElementSibling;
+    body.classList.toggle('collapsed');
+    btn.textContent = body.classList.contains('collapsed') ? 'Show more ↓' : 'Show less ↑';
+  }
+
+  // ── Init ─────────────────────────────────────────────────────────
+  // Check API health on load
+  fetch(`${API}/api/notes?limit=1`).catch(() => {
+    const badge = document.getElementById('syncBadge');
+    badge.textContent = 'Offline';
+    badge.style.background = 'var(--red-bg)';
+    badge.style.color = 'var(--red)';
+    badge.style.borderColor = 'rgba(239,68,68,0.3)';
+    badge.style.boxShadow = 'none';
+  });
+</script>
+</body>
+</html>

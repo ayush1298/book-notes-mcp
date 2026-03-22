@@ -80,3 +80,12 @@ $$;
 create trigger notes_updated_at
   before update on notes
   for each row execute function update_updated_at();
+
+-- ── Keep sync tracking ───────────────────────────────────────
+-- Tracks which Google Keep notes have already been processed.
+-- Run this in Supabase SQL Editor to add Keep integration support.
+create table if not exists keep_synced (
+  keep_note_id  text primary key,
+  note_id       uuid references notes(id) on delete set null,
+  synced_at     timestamptz not null default now()
+);

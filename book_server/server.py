@@ -165,6 +165,47 @@ TOOLS = [
             "required": ["note_id"],
         },
     ),
+    Tool(
+        name="sync_from_keep",
+        description=(
+            "[EXPERIMENTAL] Sync new notes from Google Keep into the knowledge base via gkeepapi. "
+            "May fail due to Google API restrictions. Use 'import_from_takeout' as a reliable alternative."
+        ),
+        inputSchema={
+            "type": "object",
+            "properties": {
+                "label": {
+                    "type": "string",
+                    "description": "Keep label to filter notes (default: value of KEEP_LABEL in .env, usually 'book-note')",
+                },
+            },
+        },
+    ),
+    Tool(
+        name="import_from_takeout",
+        description=(
+            "Import Keep notes from a Google Takeout export into the knowledge base. "
+            "More reliable than sync_from_keep. "
+            "Steps: go to takeout.google.com → select only Keep → download zip → extract → "
+            "call this tool with the path to the 'Keep' folder inside the extracted archive. "
+            "Already-processed notes are skipped automatically."
+        ),
+        inputSchema={
+            "type": "object",
+            "properties": {
+                "takeout_dir": {
+                    "type": "string",
+                    "description": "Absolute path to the 'Takeout/Keep' folder from the extracted Google Takeout archive",
+                },
+                "label": {
+                    "type": "string",
+                    "description": "Only import notes with this label (default: 'book-note'). Pass empty string to import all notes.",
+                    "default": "book-note",
+                },
+            },
+            "required": ["takeout_dir"],
+        },
+    ),
 ]
 
 
@@ -291,6 +332,132 @@ async def _dispatch(name: str, args: dict) -> dict:
             "source_note_id": args["note_id"],
             "source_tags": tags,
             "linked_notes": linked[:limit],
+        }
+
+    # ── sync_from_keep ────────────────────────────────────────────────────
+    elif name == "sync_from_keep":
+        from book_server.keep_client import fetch_unsynced_notes, mark_synced
+
+        label = args.get("label")  # None → uses KEEP_LABEL from .env
+        unsynced = fetch_unsynced_notes(label)
+
+        if not unsynced:
+            return {
+                "message": "No new Keep notes to sync.",
+                "synced_count": 0,
+                "notes": [],
+            }
+
+        synced_notes = []
+        errors = []
+
+        for keep_note in unsynced:
+            try:
+                # Full pipeline
+                processed = _process_note(keep_note["text"])
+                note_id = db.insert_note(
+                    raw_text=keep_note["text"],
+                    source="keep",
+                    book_title=processed.get("book_title"),
+                    summary=processed.get("summary"),
+                    ideas=processed.get("ideas"),
+                    tags=processed.get("tags"),
+                    actions=processed.get("actions"),
+                )
+                embed_text = processed["summary"] + " " + " ".join(processed.get("ideas", []))
+                embed_and_store(note_id, embed_text)
+                note_data = {**processed, "raw_text": keep_note["text"], "source": "keep"}
+                filesystem.save_note(note_id, note_data)
+                mark_synced(keep_note["keep_id"], note_id)
+
+                synced_notes.append({
+                    "keep_id": keep_note["keep_id"],
+                    "note_id": note_id,
+                    "book_title": processed.get("book_title"),
+                    "tags": processed.get("tags"),
+                })
+            except Exception as exc:
+                errors.append({"keep_id": keep_note["keep_id"], "error": str(exc)})
+
+        return {
+            "synced_count": len(synced_notes),
+            "notes": synced_notes,
+            "errors": errors,
+        }
+
+    # ── import_from_takeout ─────────────────────────────────────────────────
+    elif name == "import_from_takeout":
+        from book_server.takeout_client import load_notes_from_takeout
+
+        takeout_dir = args["takeout_dir"]
+        label = args.get("label", "book-note") or None  # empty string → None (all notes)
+
+        raw_notes = load_notes_from_takeout(takeout_dir, label_filter=label)
+
+        if not raw_notes:
+            return {
+                "message": f"No notes found in {takeout_dir} with label '{label}'.",
+                "imported_count": 0,
+                "notes": [],
+            }
+
+        # Deduplicate against already-processed source files via keep_synced table
+        # (we use source_file as the keep_note_id for Takeout imports)
+        from book_server.keep_client import mark_synced
+        from storage.db import _client as db_client
+
+        existing = (
+            db_client().table("keep_synced")
+            .select("keep_note_id")
+            .in_("keep_note_id", [n["source_file"] for n in raw_notes])
+            .execute()
+        )
+        already_done = {row["keep_note_id"] for row in (existing.data or [])}
+        to_import = [n for n in raw_notes if n["source_file"] not in already_done]
+
+        if not to_import:
+            return {
+                "message": "All notes in this Takeout export have already been imported.",
+                "imported_count": 0,
+                "skipped_count": len(raw_notes),
+                "notes": [],
+            }
+
+        imported_notes = []
+        errors = []
+
+        for note in to_import:
+            try:
+                processed = _process_note(note["text"])
+                note_id = db.insert_note(
+                    raw_text=note["text"],
+                    source="keep-takeout",
+                    book_title=processed.get("book_title"),
+                    summary=processed.get("summary"),
+                    ideas=processed.get("ideas"),
+                    tags=processed.get("tags"),
+                    actions=processed.get("actions"),
+                )
+                embed_text = processed["summary"] + " " + " ".join(processed.get("ideas", []))
+                embed_and_store(note_id, embed_text)
+                note_data = {**processed, "raw_text": note["text"], "source": "keep-takeout"}
+                filesystem.save_note(note_id, note_data)
+                mark_synced(note["source_file"], note_id)  # track by filename
+
+                imported_notes.append({
+                    "source_file": note["source_file"],
+                    "note_id": note_id,
+                    "book_title": processed.get("book_title"),
+                    "tags": processed.get("tags"),
+                })
+            except Exception as exc:
+                errors.append({"source_file": note["source_file"], "error": str(exc)})
+
+        return {
+            "imported_count": len(imported_notes),
+            "skipped_count": len(raw_notes) - len(to_import),
+            "notes": imported_notes,
+            "errors": errors,
         }
 
     else:

@@ -1,0 +1,204 @@
+"""
+Book Notes Web API — FastAPI server wrapping the core pipeline.
+
+Endpoints:
+  POST /api/process        — process a raw note
+  POST /api/ask            — RAG question answering
+  POST /api/search         — semantic search
+  GET  /api/notes          — list notes (optional ?tag= & ?limit=)
+  GET  /api/notes/{id}     — get a single note by ID
+  POST /api/webhook/keep   — IFTTT auto-sync from Google Keep
+  GET  /                   — serves the web dashboard SPA
+
+Run locally:
+  python web/app.py
+  Open http://localhost:8080
+
+Phone on same WiFi:
+  Open http://<your-mac-ip>:8080
+
+Heroku:
+  Procfile: web: uvicorn web.app:app --host 0.0.0.0 --port $PORT
+"""
+from __future__ import annotations
+
+import sys
+from pathlib import Path
+
+# Ensure project root is on path so pipeline modules resolve
+sys.path.insert(0, str(Path(__file__).parent.parent))
+
+from fastapi import FastAPI, HTTPException, Request, BackgroundTasks
+from fastapi.middleware.cors import CORSMiddleware
+from fastapi.responses import FileResponse
+from fastapi.staticfiles import StaticFiles
+from pydantic import BaseModel
+
+import config  # noqa — ensures NOTES_DIR created on startup
+
+app = FastAPI(title="Book Notes", docs_url="/api/docs")
+
+# Allow browser requests from any origin (important for development)
+app.add_middleware(
+    CORSMiddleware,
+    allow_origins=["*"],
+    allow_methods=["*"],
+    allow_headers=["*"],
+)
+
+# Serve static files (frontend)
+_static_dir = Path(__file__).parent / "static"
+app.mount("/static", StaticFiles(directory=str(_static_dir)), name="static")
+
+
+# ── Request / Response models ───────────────────────────────────────────────
+
+class ProcessRequest(BaseModel):
+    raw_text: str
+    source: str = "manual"
+    book_title: str | None = None
+
+class AskRequest(BaseModel):
+    question: str
+
+class SearchRequest(BaseModel):
+    query: str
+    limit: int = 5
+    threshold: float = 0.4
+
+class KeepWebhookRequest(BaseModel):
+    title: str = ""
+    content: str = ""
+
+
+# ── Routes ─────────────────────────────────────────────────────────────────
+
+@app.get("/")
+def index():
+    return FileResponse(str(_static_dir / "index.html"))
+
+
+@app.post("/api/process")
+def process_note(req: ProcessRequest):
+    """Run a raw note through the full pipeline: summarise → store → embed."""
+    from processing.summarizer import process_note as _process
+    from storage import db, filesystem
+    from embeddings.embed import embed_and_store
+
+    try:
+        processed = _process(req.raw_text)
+        if req.book_title:
+            processed["book_title"] = req.book_title
+
+        note_id = db.insert_note(
+            raw_text=req.raw_text,
+            source=req.source,
+            book_title=processed.get("book_title"),
+            summary=processed.get("summary"),
+            ideas=processed.get("ideas"),
+            tags=processed.get("tags"),
+            actions=processed.get("actions"),
+        )
+
+        embed_text = processed["summary"] + " " + " ".join(processed.get("ideas", []))
+        embed_and_store(note_id, embed_text)
+        filesystem.save_note(note_id, {**processed, "raw_text": req.raw_text, "source": req.source})
+
+        return {"note_id": note_id, **processed}
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=str(e))
+
+
+@app.post("/api/ask")
+def ask(req: AskRequest):
+    """RAG: embed question → retrieve similar notes → synthesise answer."""
+    from agent.query_agent import answer_query
+    try:
+        return answer_query(req.question)
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=str(e))
+
+
+@app.post("/api/search")
+def search(req: SearchRequest):
+    """Semantic search across all notes."""
+    from embeddings.embed import get_embedding
+    from storage.db import search_similar
+    try:
+        embedding = get_embedding(req.query)
+        results = search_similar(embedding, threshold=req.threshold, limit=req.limit)
+        return {"query": req.query, "results": results}
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=str(e))
+
+
+@app.get("/api/notes")
+def list_notes(tag: str | None = None, limit: int = 20):
+    """List notes, optionally filtered by tag."""
+    from storage.db import list_notes as _list
+    try:
+        return {"notes": _list(limit=limit, tag=tag or None)}
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=str(e))
+
+
+@app.get("/api/notes/{note_id}")
+def get_note(note_id: str):
+    """Get a single note by ID."""
+    from storage.db import get_note as _get
+    try:
+        note = _get(note_id)
+        if not note:
+            raise HTTPException(status_code=404, detail="Note not found")
+        return note
+    except HTTPException:
+        raise
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=str(e))
+
+
+@app.post("/api/webhook/keep")
+def keep_webhook(req: KeepWebhookRequest, background_tasks: BackgroundTasks):
+    """
+    IFTTT webhook: called automatically when a Keep note is labelled 'book-note'.
+    Processes the note in the background so IFTTT gets an immediate 200 response.
+    """
+    text = f"{req.title}\n{req.content}".strip() if req.title else req.content.strip()
+    if not text:
+        return {"status": "skipped", "reason": "empty note"}
+
+    def _process_in_background(raw_text: str):
+        from processing.summarizer import process_note as _process
+        from storage import db, filesystem
+        from embeddings.embed import embed_and_store
+        processed = _process(raw_text)
+        note_id = db.insert_note(
+            raw_text=raw_text, source="keep",
+            book_title=processed.get("book_title"),
+            summary=processed.get("summary"),
+            ideas=processed.get("ideas"),
+            tags=processed.get("tags"),
+            actions=processed.get("actions"),
+        )
+        embed_text = processed["summary"] + " " + " ".join(processed.get("ideas", []))
+        embed_and_store(note_id, embed_text)
+        filesystem.save_note(note_id, {**processed, "raw_text": raw_text, "source": "keep"})
+
+    background_tasks.add_task(_process_in_background, text)
+    return {"status": "queued"}
+
+
+# ── Dev server entry point ──────────────────────────────────────────────────
+
+if __name__ == "__main__":
+    import uvicorn
+    import socket
+
+    # Print local IP for easy phone access
+    hostname = socket.gethostname()
+    local_ip = socket.gethostbyname(hostname)
+    print(f"\n🚀 Book Notes running at:")
+    print(f"   Local:   http://localhost:8080")
+    print(f"   Network: http://{local_ip}:8080  ← open this on your phone\n")
+
+    uvicorn.run("web.app:app", host="0.0.0.0", port=8080, reload=True)
