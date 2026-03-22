@@ -68,6 +68,29 @@ def list_notes(
     return q.order("created_at", desc=True).range(offset, offset + limit - 1).execute().data
 
 
+def link_notes(note_id: str, limit: int = 5) -> list[dict[str, Any]]:
+    """Find notes conceptually related to a given note based on shared tags."""
+    note = get_note(note_id)
+    if not note:
+        return []
+
+    tags = note.get("tags") or []
+    linked: list[dict[str, Any]] = []
+    seen: set[str] = {note_id}
+    
+    for tag in tags:
+        for candidate in list_notes(limit=20, tag=tag):
+            cid = candidate["id"]
+            if cid not in seen:
+                candidate["similarity"] = 0.85  # mock similarity for UI display if tag matched 
+                linked.append(candidate)
+                seen.add(cid)
+        if len(linked) >= limit:
+            break
+
+    return linked[:limit]
+
+
 def search_similar(
     query_embedding: list[float],
     threshold: float = 0.5,

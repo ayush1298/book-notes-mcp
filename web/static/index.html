@@ -697,7 +697,11 @@
         </div>
         <div class="card-body collapsed" id="body-${i}">${n.summary || ''}</div>
         <button class="expand-btn" onclick="toggleExpand(${i})">Show more ↓</button>
-        <div class="card-footer">${tagChips(n.tags)}</div>
+        <div id="connections-${i}" class="connections-container" style="display:none; margin-top: 16px;"></div>
+        <div class="card-footer">
+          ${tagChips(n.tags)}
+          <button class="expand-btn" style="margin: 0 0 0 auto; color: var(--accent2);" onclick="findConnections(${i}, '${n.id}')" id="conn-btn-${i}">🔗 Discover Connections</button>
+        </div>
       </div>`).join('');
   }
 
@@ -706,6 +710,48 @@
     const btn = body.nextElementSibling;
     body.classList.toggle('collapsed');
     btn.textContent = body.classList.contains('collapsed') ? 'Show more ↓' : 'Show less ↑';
+  }
+
+  async function findConnections(i, noteId) {
+    const container = document.getElementById(`connections-${i}`);
+    const btn = document.getElementById(`conn-btn-${i}`);
+    
+    // Toggle off if already showing
+    if (container.style.display === 'block') {
+      container.style.display = 'none';
+      btn.textContent = '🔗 Discover Connections';
+      return;
+    }
+
+    btn.innerHTML = '<span class="spinner" style="width:12px;height:12px;border-width:2px;margin-right:6px;"></span>Thinking…';
+    container.style.display = 'block';
+    
+    try {
+      const res = await fetch(`${API}/api/notes/${noteId}/link?limit=3`);
+      const data = await res.json();
+      if (!res.ok) throw new Error(data.detail || 'Error');
+
+      const related = data.related || [];
+      if (!related.length) {
+        container.innerHTML = '<div class="status">No strong semantic connections found in your knowledge base yet.</div>';
+      } else {
+        container.innerHTML = `
+          <div class="section-title" style="margin: 10px 0;">Related Concepts</div>
+          ${related.map(r => `
+            <div style="padding: 10px; background: rgba(139, 92, 246, 0.05); border: 1px solid rgba(139, 92, 246, 0.2); border-radius: 8px; margin-bottom: 8px; cursor: pointer; transition: background 0.2s;" onmouseover="this.style.background='rgba(139, 92, 246, 0.1)'" onmouseout="this.style.background='rgba(139, 92, 246, 0.05)'" onclick="document.getElementById('searchText').value='${r.book_title.replace(/'/g, "\\'")}'; switchTab('search', document.querySelectorAll('nav button')[2]); doSearch();">
+              <div style="font-size: 13px; font-weight: 600; color: var(--text1); margin-bottom: 4px; display: flex; align-items: center; gap: 8px;">
+                 📖 ${r.book_title || 'Unknown Note'}
+                 <span class="sim-badge" style="margin-left:auto; color: ${simColor(r.similarity)}">${Math.round(r.similarity*100)}%</span>
+              </div>
+              <div style="font-size: 12px; color: var(--text2); display: -webkit-box; -webkit-line-clamp: 2; line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden;">${r.summary}</div>
+            </div>
+          `).join('')}
+        `;
+      }
+    } catch (e) {
+      container.innerHTML = `<div class="status error" style="margin-top:10px;">❌ ${e.message}</div>`;
+    }
+    btn.textContent = 'Close Connections ↑';
   }
 
   // ── Init ─────────────────────────────────────────────────────────

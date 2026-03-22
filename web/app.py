@@ -156,6 +156,15 @@ def get_note(note_id: str):
     except Exception as e:
         raise HTTPException(status_code=500, detail=str(e))
 
+@app.get("/api/notes/{note_id}/link")
+def link_notes(note_id: str, limit: int = 5):
+    """Find notes conceptually related to a given note."""
+    from storage.db import link_notes as _link
+    try:
+        return {"related": _link(note_id, limit=limit)}
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=str(e))
+
 
 @app.post("/api/webhook/keep")
 def keep_webhook(req: KeepWebhookRequest, background_tasks: BackgroundTasks):
