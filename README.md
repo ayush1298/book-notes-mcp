@@ -16,6 +16,7 @@ Capture book notes (typed, pasted, or OCR'd), have them automatically summarized
 | `get_note` | Retrieve a specific note by ID |
 | `list_notes` | Browse notes, filter by tag |
 | `link_notes` | Discover connections between notes across different books |
+| `sync_from_keep_api` | Poll a dedicated Google Keep account via the official Keep API and import/update notes |
 
 ---
 
@@ -42,6 +43,14 @@ cp .env.example .env
 GEMINI_API_KEY=<your key from aistudio.google.com>
 SUPABASE_URL=<your project URL>
 SUPABASE_SERVICE_KEY=<your service_role key>
+```
+
+**For official Google Keep sync, also add:**
+```
+KEEP_CLIENT_ID=<oauth client id>
+KEEP_CLIENT_SECRET=<oauth client secret>
+KEEP_TOKEN_FILE=.keep_oauth_token.json
+KEEP_SYNC_INTERVAL_MINUTES=5
 ```
 
 ### 3. Set up Supabase
@@ -133,6 +142,48 @@ pytest tests/test_processing.py -v
 pytest tests/ -v
 ```
 
+## Google Keep Sync
+
+Recommended setup: use a dedicated Google account for book capture in Google Keep, then poll that account from the server.
+
+### 1. Enable Keep API + create OAuth credentials
+
+1. In Google Cloud Console, enable the Google Keep API
+2. Create an OAuth Client ID for a desktop app
+3. Put `KEEP_CLIENT_ID` and `KEEP_CLIENT_SECRET` in `.env`
+
+### 2. Bootstrap the token once
+
+Run locally on a machine with a browser:
+
+```bash
+book-notes-keep-auth
+```
+
+This writes the refreshable OAuth token to `KEEP_TOKEN_FILE`. Deploy that token file securely with your server.
+
+### 3. Run a sync pass manually
+
+```bash
+book-notes-keep-sync
+```
+
+The sync job:
+- imports new Keep notes
+- updates previously imported notes when the Keep note changed
+- skips unchanged notes
+- does not delete app notes if a Keep note is later removed
+
+### 4. Schedule it on the deployed server
+
+Run the sync command every 5 minutes using your hosting scheduler or cron.
+
+Example cron:
+
+```bash
+*/5 * * * * cd /path/to/book-notes-mcp && /path/to/.venv/bin/book-notes-keep-sync >> keep-sync.log 2>&1
+```
+
 ---
 
 ## 📁 Project Structure
@@ -166,6 +217,6 @@ book-notes-mcp/
 - [x] Core pipeline (process → store → embed → search)
 - [x] MCP server with 6 tools
 - [x] RAG query agent
-- [ ] Google Keep automatic import (Phase 3)
+- [x] Google Keep automatic import (official API poller)
 - [ ] Knowledge graph visualisation
 - [ ] Book-level summaries

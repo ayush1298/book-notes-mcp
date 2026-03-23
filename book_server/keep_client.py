@@ -170,6 +170,7 @@ def fetch_unsynced_notes(label_name: str | None = None) -> list[dict[str, Any]]:
 
 def mark_synced(keep_note_id: str, note_id: str) -> None:
     """Record that a Keep note has been processed and stored."""
-    db_client().table("keep_synced").insert(
-        {"keep_note_id": keep_note_id, "note_id": note_id}
+    db_client().table("keep_synced").upsert(
+        {"keep_note_id": keep_note_id, "note_id": note_id},
+        on_conflict="keep_note_id",
     ).execute()

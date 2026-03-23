@@ -15,6 +15,9 @@ dependencies = [
     "rich>=13.7.0",
     "tenacity>=8.2.3",
     "gkeepapi>=0.16.0",
+    "google-api-python-client>=2.169.0",
+    "google-auth>=2.40.0",
+    "google-auth-oauthlib>=1.2.0",
 ]
 
 [project.optional-dependencies]
@@ -26,6 +29,8 @@ dev = [
 
 [project.scripts]
 book-notes = "book_server.server:entrypoint"
+book-notes-keep-sync = "book_server.keep_sync:entrypoint"
+book-notes-keep-auth = "book_server.official_keep_client:bootstrap_entrypoint"
 
 [tool.setuptools.packages.find]
 where = ["."]

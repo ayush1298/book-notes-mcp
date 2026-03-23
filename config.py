@@ -22,6 +22,14 @@ def _require(key: str) -> str:
     return val
 
 
+def _path_env(key: str, default: str) -> Path:
+    raw = os.getenv(key, default)
+    path = Path(raw)
+    if not path.is_absolute():
+        path = (_PROJECT_ROOT / path).resolve()
+    return path
+
+
 # ── LLM / Embedding ────────────────────────────────────────────────────────
 LLM_MODEL: str = os.getenv("LLM_MODEL", "gemini/gemini-2.5-flash")
 EMBEDDING_MODEL: str = os.getenv("EMBEDDING_MODEL", "gemini/gemini-embedding-001")
@@ -40,3 +48,9 @@ NOTES_DIR: Path = (
     else (_PROJECT_ROOT / _notes_raw)
 ).resolve()
 NOTES_DIR.mkdir(parents=True, exist_ok=True)
+
+# ── Google Keep sync ──────────────────────────────────────────────────────
+KEEP_CLIENT_ID: str = os.getenv("KEEP_CLIENT_ID", "")
+KEEP_CLIENT_SECRET: str = os.getenv("KEEP_CLIENT_SECRET", "")
+KEEP_TOKEN_FILE: Path = _path_env("KEEP_TOKEN_FILE", ".keep_oauth_token.json")
+KEEP_SYNC_INTERVAL_MINUTES: int = int(os.getenv("KEEP_SYNC_INTERVAL_MINUTES", "5"))

@@ -26,9 +26,9 @@ from mcp.types import TextContent, Tool
 
 import config  # noqa: F401 — triggers NOTES_DIR creation on import
 from agent.query_agent import answer_query
-from embeddings.embed import embed_and_store
-from processing.summarizer import process_note as _process_note
-from storage import db, filesystem
+from book_server.ingestion import ingest_note
+from book_server.keep_sync import sync_once as sync_keep_once
+from storage import db
 
 # ── Server setup ───────────────────────────────────────────────────────────
 
@@ -182,6 +182,17 @@ TOOLS = [
         },
     ),
     Tool(
+        name="sync_from_keep_api",
+        description=(
+            "Sync notes from the dedicated Google Keep account using the official Google Keep API. "
+            "Imports new notes and updates previously imported notes when the Keep note changes."
+        ),
+        inputSchema={
+            "type": "object",
+            "properties": {},
+        },
+    ),
+    Tool(
         name="import_from_takeout",
         description=(
             "Import Keep notes from a Google Takeout export into the knowledge base. "
@@ -233,42 +244,7 @@ async def _dispatch(name: str, args: dict) -> dict:
         raw_text = args["raw_text"]
         source = args.get("source", "manual")
         provided_title = args.get("book_title")
-
-        # LLM extraction
-        processed = _process_note(raw_text)
-
-        # Prefer caller-supplied title over LLM-inferred
-        if provided_title:
-            processed["book_title"] = provided_title
-
-        # Persist to Supabase
-        note_id = db.insert_note(
-            raw_text=raw_text,
-            source=source,
-            book_title=processed.get("book_title"),
-            summary=processed.get("summary"),
-            ideas=processed.get("ideas"),
-            tags=processed.get("tags"),
-            actions=processed.get("actions"),
-        )
-
-        # Embed summary (most information-dense text)
-        embed_text = processed["summary"] + " " + " ".join(processed.get("ideas", []))
-        embed_and_store(note_id, embed_text)
-
-        # Save markdown backup
-        note_data = {**processed, "raw_text": raw_text, "source": source}
-        md_path = filesystem.save_note(note_id, note_data)
-
-        return {
-            "note_id": note_id,
-            "book_title": processed.get("book_title"),
-            "summary": processed.get("summary"),
-            "ideas": processed.get("ideas"),
-            "tags": processed.get("tags"),
-            "actions": processed.get("actions"),
-            "markdown_saved_to": str(md_path),
-        }
+        return ingest_note(raw_text=raw_text, source=source, book_title=provided_title)
 
     # ── search_notes ──────────────────────────────────────────────────────
     elif name == "search_notes":
@@ -353,28 +329,15 @@ async def _dispatch(name: str, args: dict) -> dict:
 
         for keep_note in unsynced:
             try:
-                # Full pipeline
-                processed = _process_note(keep_note["text"])
-                note_id = db.insert_note(
-                    raw_text=keep_note["text"],
-                    source="keep",
-                    book_title=processed.get("book_title"),
-                    summary=processed.get("summary"),
-                    ideas=processed.get("ideas"),
-                    tags=processed.get("tags"),
-                    actions=processed.get("actions"),
-                )
-                embed_text = processed["summary"] + " " + " ".join(processed.get("ideas", []))
-                embed_and_store(note_id, embed_text)
-                note_data = {**processed, "raw_text": keep_note["text"], "source": "keep"}
-                filesystem.save_note(note_id, note_data)
+                result = ingest_note(raw_text=keep_note["text"], source="keep")
+                note_id = result["note_id"]
                 mark_synced(keep_note["keep_id"], note_id)
 
                 synced_notes.append({
                     "keep_id": keep_note["keep_id"],
                     "note_id": note_id,
-                    "book_title": processed.get("book_title"),
-                    "tags": processed.get("tags"),
+                    "book_title": result.get("book_title"),
+                    "tags": result.get("tags"),
                 })
             except Exception as exc:
                 errors.append({"keep_id": keep_note["keep_id"], "error": str(exc)})
@@ -384,6 +347,10 @@ async def _dispatch(name: str, args: dict) -> dict:
             "notes": synced_notes,
             "errors": errors,
         }
+
+    # ── sync_from_keep_api ────────────────────────────────────────────────
+    elif name == "sync_from_keep_api":
+        return sync_keep_once()
 
     # ── import_from_takeout ─────────────────────────────────────────────────
     elif name == "import_from_takeout":
@@ -428,27 +395,15 @@ async def _dispatch(name: str, args: dict) -> dict:
 
         for note in to_import:
             try:
-                processed = _process_note(note["text"])
-                note_id = db.insert_note(
-                    raw_text=note["text"],
-                    source="keep-takeout",
-                    book_title=processed.get("book_title"),
-                    summary=processed.get("summary"),
-                    ideas=processed.get("ideas"),
-                    tags=processed.get("tags"),
-                    actions=processed.get("actions"),
-                )
-                embed_text = processed["summary"] + " " + " ".join(processed.get("ideas", []))
-                embed_and_store(note_id, embed_text)
-                note_data = {**processed, "raw_text": note["text"], "source": "keep-takeout"}
-                filesystem.save_note(note_id, note_data)
+                result = ingest_note(raw_text=note["text"], source="keep-takeout")
+                note_id = result["note_id"]
                 mark_synced(note["source_file"], note_id)  # track by filename
 
                 imported_notes.append({
                     "source_file": note["source_file"],
                     "note_id": note_id,
-                    "book_title": processed.get("book_title"),
-                    "tags": processed.get("tags"),
+                    "book_title": result.get("book_title"),
+                    "tags": result.get("tags"),
                 })
             except Exception as exc:
                 errors.append({"source_file": note["source_file"], "error": str(exc)})

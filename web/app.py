@@ -28,13 +28,14 @@ from pathlib import Path
 # Ensure project root is on path so pipeline modules resolve
 sys.path.insert(0, str(Path(__file__).parent.parent))
 
-from fastapi import FastAPI, HTTPException, Request, BackgroundTasks
+from fastapi import FastAPI, HTTPException, BackgroundTasks
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import FileResponse
 from fastapi.staticfiles import StaticFiles
 from pydantic import BaseModel
 
 import config  # noqa — ensures NOTES_DIR created on startup
+from book_server.ingestion import ingest_note
 
 app = FastAPI(title="Book Notes", docs_url="/api/docs")
 
@@ -81,30 +82,12 @@ def index():
 @app.post("/api/process")
 def process_note(req: ProcessRequest):
     """Run a raw note through the full pipeline: summarise → store → embed."""
-    from processing.summarizer import process_note as _process
-    from storage import db, filesystem
-    from embeddings.embed import embed_and_store
-
     try:
-        processed = _process(req.raw_text)
-        if req.book_title:
-            processed["book_title"] = req.book_title
-
-        note_id = db.insert_note(
+        return ingest_note(
             raw_text=req.raw_text,
             source=req.source,
-            book_title=processed.get("book_title"),
-            summary=processed.get("summary"),
-            ideas=processed.get("ideas"),
-            tags=processed.get("tags"),
-            actions=processed.get("actions"),
+            book_title=req.book_title,
         )
-
-        embed_text = processed["summary"] + " " + " ".join(processed.get("ideas", []))
-        embed_and_store(note_id, embed_text)
-        filesystem.save_note(note_id, {**processed, "raw_text": req.raw_text, "source": req.source})
-
-        return {"note_id": note_id, **processed}
     except Exception as e:
         raise HTTPException(status_code=500, detail=str(e))
 
@@ -177,21 +160,7 @@ def keep_webhook(req: KeepWebhookRequest, background_tasks: BackgroundTasks):
         return {"status": "skipped", "reason": "empty note"}
 
     def _process_in_background(raw_text: str):
-        from processing.summarizer import process_note as _process
-        from storage import db, filesystem
-        from embeddings.embed import embed_and_store
-        processed = _process(raw_text)
-        note_id = db.insert_note(
-            raw_text=raw_text, source="keep",
-            book_title=processed.get("book_title"),
-            summary=processed.get("summary"),
-            ideas=processed.get("ideas"),
-            tags=processed.get("tags"),
-            actions=processed.get("actions"),
-        )
-        embed_text = processed["summary"] + " " + " ".join(processed.get("ideas", []))
-        embed_and_store(note_id, embed_text)
-        filesystem.save_note(note_id, {**processed, "raw_text": raw_text, "source": "keep"})
+        ingest_note(raw_text=raw_text, source="keep")
 
     background_tasks.add_task(_process_in_background, text)
     return {"status": "queued"}

@@ -34,3 +34,11 @@ def embed_and_store(note_id: str, text: str) -> list[float]:
     embedding = get_embedding(text)
     store_embedding(note_id, embedding)
     return embedding
+
+
+def replace_embedding(note_id: str, text: str) -> list[float]:
+    """Replace any existing embedding rows for a note with a fresh embedding."""
+    from storage.db import delete_embeddings
+
+    delete_embeddings(note_id)
+    return embed_and_store(note_id, text)
