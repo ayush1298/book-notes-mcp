@@ -1,52 +1,81 @@
-# 📚 Book Notes MCP
+# book-notes-mcp
 
-A personal AI knowledge system for physical book reading.
+`book-notes-mcp` is a personal reading system for turning messy capture into usable notes.
 
-Capture book notes (typed, pasted, or OCR'd), have them automatically summarized & tagged, stored with vector embeddings, and recall them semantically — all from inside Claude Desktop or Cursor.
+The input can be rough: something typed quickly on your phone, an OCR scrape from a page, a voice transcript, or a note pulled in from Google Keep. The app processes that raw text once, stores the result in Supabase, generates embeddings, and makes it available through semantic search, RAG-style Q&A, and a small web interface.
 
----
+It is built for one practical problem: reading produces a lot of fragments, but the value only shows up later when those fragments are easy to retrieve and connect.
 
-## ✨ Features
+## What the project does
 
-| Tool | What it does |
-|------|-------------|
-| `process_note` | Paste any book text → LLM extracts summary, ideas, tags, actions → stored + embedded |
-| `search_notes` | Semantic search across everything you've read |
-| `ask_knowledge_base` | Ask a question → RAG answer synthesized from your notes |
-| `get_note` | Retrieve a specific note by ID |
-| `list_notes` | Browse notes, filter by tag |
-| `link_notes` | Discover connections between notes across different books |
-| `sync_from_keep_api` | Poll a dedicated Google Keep account via the official Keep API and import/update notes |
+- Processes raw notes into a structured shape: `book_title`, `summary`, `ideas`, `tags`, `actions`
+- Stores both the raw capture and the processed note
+- Builds embeddings for retrieval across your reading history
+- Exposes the knowledge base through MCP tools, a web API, and a browser UI
+- Syncs notes from a dedicated Google Keep account using the official Keep API
 
----
+## Core tools
 
-## 🚀 Setup
+| Tool | Purpose |
+| --- | --- |
+| `process_note` | Turn one raw note into a stored note with metadata and embeddings |
+| `search_notes` | Semantic search across the library |
+| `ask_knowledge_base` | Answer a question using retrieved notes as context |
+| `get_note` | Fetch one note by id |
+| `list_notes` | Browse recent notes, optionally by tag |
+| `link_notes` | Find related notes based on shared concepts |
+| `sync_from_keep_api` | Poll the configured Google Keep account and import or update notes |
 
-### 1. Clone & install
+## How it is meant to be used
+
+1. Capture notes wherever it is easiest.
+   Google Keep is the intended inbox for phone capture because it handles typing, OCR, and voice well.
+2. Let this project do the organizing.
+   Raw text is processed into something cleaner and easier to search.
+3. Retrieve later by concept, not by memory of exact wording.
+   That is what the embeddings and Q&A layer are for.
+
+## Stack
+
+- FastAPI web app for the browser UI and HTTP endpoints
+- Supabase for note storage and vector search
+- LiteLLM for model routing
+- MCP server for Claude Desktop / Cursor workflows
+- Google Keep API for scheduled Keep sync
+
+## Setup
+
+### 1. Clone and install
 
 ```bash
 git clone <your-repo>
 cd book-notes-mcp
-python -m venv .venv && source .venv/bin/activate
+python -m venv .venv
+source .venv/bin/activate
 pip install -e ".[dev]"
 ```
 
-### 2. Configure environment
+### 2. Create `.env`
+
+At minimum:
 
 ```bash
-cp .env.example .env
-# Edit .env and fill in your values
+GEMINI_API_KEY=<your key>
+SUPABASE_URL=<your project url>
+SUPABASE_SERVICE_KEY=<your service role key>
 ```
 
-**Minimum required in `.env`:**
-```
-GEMINI_API_KEY=<your key from aistudio.google.com>
-SUPABASE_URL=<your project URL>
-SUPABASE_SERVICE_KEY=<your service_role key>
+Optional model configuration:
+
+```bash
+LLM_MODEL=gemini/gemini-2.5-flash
+EMBEDDING_MODEL=gemini/text-embedding-004
+VECTOR_DIM=768
 ```
 
-**For official Google Keep sync, also add:**
-```
+Optional Keep sync configuration:
+
+```bash
 KEEP_CLIENT_ID=<oauth client id>
 KEEP_CLIENT_SECRET=<oauth client secret>
 KEEP_TOKEN_FILE=.keep_oauth_token.json
@@ -55,22 +84,24 @@ KEEP_SYNC_INTERVAL_MINUTES=5
 
 ### 3. Set up Supabase
 
-1. Create a free project at [supabase.com](https://supabase.com)
-2. Go to **Dashboard → SQL Editor → New query**
-3. Paste the contents of [`schema.sql`](./schema.sql) and click **Run**
+Run [`schema.sql`](./schema.sql) in the Supabase SQL editor.
 
-> **Note:** The schema defaults to `vector(768)` for Gemini/Ollama embeddings. If you switch to OpenAI (`text-embedding-3-small`), change `vector(768)` → `vector(1536)` and set `VECTOR_DIM=1536` in `.env`.
+Note on vector size:
 
-### 4. Connect to Claude Desktop
+- Gemini `text-embedding-004`: use `vector(768)`
+- OpenAI `text-embedding-3-small`: use `vector(1536)`
+- If you change embedding dimensions, update both the schema and `VECTOR_DIM`
 
-Edit `~/Library/Application Support/Claude/claude_desktop_config.json`:
+### 4. Connect the MCP server
+
+Add this to Claude Desktop:
 
 ```json
 {
   "mcpServers": {
     "book-notes": {
       "command": "/path/to/book-notes-mcp/.venv/bin/python",
-      "args": ["/path/to/book-notes-mcp/mcp/server.py"],
+      "args": ["/path/to/book-notes-mcp/book_server/server.py"],
       "env": {
         "PYTHONPATH": "/path/to/book-notes-mcp"
       }
@@ -79,144 +110,102 @@ Edit `~/Library/Application Support/Claude/claude_desktop_config.json`:
 }
 ```
 
-Restart Claude Desktop. You should see a 🔌 icon in the chat input.
+## Running the app
 
----
-
-## 💡 Usage (in Claude)
-
-**Add a new note:**
-> *"Process this note: In Thinking Fast and Slow, Kahneman explains that System 1 operates automatically and quickly, with little or no effort..."*
-
-**Search your notes:**
-> *"Search my notes for cognitive bias"*
-
-**Ask a question:**
-> *"What have I read about building better habits?"*
-
-**Browse notes:**
-> *"List my notes tagged habits"*
-
-**Find connections:**
-> *"Find notes related to note ID abc-123"*
-
----
-
-## 🔄 Switching LLM Providers
-
-Edit `.env` — zero code changes needed:
+Start the web app locally:
 
 ```bash
-# Gemini (default, free)
-LLM_MODEL=gemini/gemini-2.5-flash
-EMBEDDING_MODEL=gemini/text-embedding-004
-VECTOR_DIM=768
-
-# OpenAI
-LLM_MODEL=openai/gpt-4o-mini
-EMBEDDING_MODEL=openai/text-embedding-3-small
-VECTOR_DIM=1536
-
-# Ollama (local, free, no key)
-LLM_MODEL=ollama/llama3
-EMBEDDING_MODEL=ollama/nomic-embed-text
-VECTOR_DIM=768
-
-# Anthropic (no embedding support — pair with another embedding model)
-LLM_MODEL=anthropic/claude-3-haiku-20240307
-EMBEDDING_MODEL=gemini/text-embedding-004
-VECTOR_DIM=768
+python web/app.py
 ```
 
-> ⚠️ If you change `VECTOR_DIM`, you must recreate the Supabase `note_embeddings` table with the new vector size.
+Open:
 
----
+- `http://localhost:8080` on the same machine
+- `http://<your-local-ip>:8080` from your phone on the same network
 
-## 🧪 Running Tests
+## Google Keep sync
 
-```bash
-# Unit tests only (no API key needed — LLM is mocked)
-pytest tests/test_processing.py -v
+The intended setup is a dedicated Google account used only for capture. The server polls that account and imports every non-trashed note it finds.
 
-# All tests
-pytest tests/ -v
-```
+### One-time OAuth bootstrap
 
-## Google Keep Sync
-
-Recommended setup: use a dedicated Google account for book capture in Google Keep, then poll that account from the server.
-
-### 1. Enable Keep API + create OAuth credentials
-
-1. In Google Cloud Console, enable the Google Keep API
-2. Create an OAuth Client ID for a desktop app
+1. Enable the Google Keep API in Google Cloud
+2. Create an OAuth client for a desktop app
 3. Put `KEEP_CLIENT_ID` and `KEEP_CLIENT_SECRET` in `.env`
-
-### 2. Bootstrap the token once
-
-Run locally on a machine with a browser:
+4. Run:
 
 ```bash
 book-notes-keep-auth
 ```
 
-This writes the refreshable OAuth token to `KEEP_TOKEN_FILE`. Deploy that token file securely with your server.
+That writes the token file configured by `KEEP_TOKEN_FILE`.
 
-### 3. Run a sync pass manually
+### Run one sync pass
 
 ```bash
 book-notes-keep-sync
 ```
 
-The sync job:
-- imports new Keep notes
-- updates previously imported notes when the Keep note changed
-- skips unchanged notes
-- does not delete app notes if a Keep note is later removed
+The sync behavior is:
 
-### 4. Schedule it on the deployed server
+- new Keep note -> create a new note in the library
+- changed Keep note -> update the existing mapped note and refresh its embedding
+- unchanged Keep note -> skip
+- deleted or missing Keep note -> no automatic deletion in the app
 
-Run the sync command every 5 minutes using your hosting scheduler or cron.
+### Schedule it
 
-Example cron:
+Run the sync command every 5 minutes on the deployed server.
+
+Example cron entry:
 
 ```bash
 */5 * * * * cd /path/to/book-notes-mcp && /path/to/.venv/bin/book-notes-keep-sync >> keep-sync.log 2>&1
 ```
 
----
+## API surface
 
-## 📁 Project Structure
+Web endpoints in [`web/app.py`](./web/app.py):
 
+- `POST /api/process`
+- `POST /api/ask`
+- `POST /api/search`
+- `GET /api/notes`
+- `GET /api/notes/{id}`
+- `GET /api/notes/{id}/link`
+- `POST /api/webhook/keep`
+
+## Development
+
+Run tests:
+
+```bash
+pytest tests/ -v
 ```
+
+The current test suite focuses on processing logic and Keep sync behavior with mocked external services.
+
+## Project layout
+
+```text
 book-notes-mcp/
-├── mcp/
-│   └── server.py          ← MCP server (main entrypoint)
-├── processing/
-│   └── summarizer.py      ← LLM extraction
-├── storage/
-│   ├── db.py              ← Supabase client
-│   └── filesystem.py      ← Markdown backup
-├── embeddings/
-│   └── embed.py           ← LiteLLM embeddings
-├── agent/
-│   └── query_agent.py     ← RAG query agent
-├── tests/
-│   └── test_processing.py
-├── notes/                 ← Auto-created, git-ignored
-├── schema.sql             ← Run this in Supabase SQL Editor
-├── config.py              ← Centralised settings
-├── .env.example
-└── pyproject.toml
+├── agent/                  RAG query logic
+├── book_server/            MCP server, Keep sync, ingestion services
+├── embeddings/             embedding generation and storage helpers
+├── processing/             note extraction and summarization
+├── storage/                Supabase and filesystem persistence
+├── tests/                  unit tests
+├── web/                    FastAPI app and frontend
+├── config.py               environment-driven config
+├── pyproject.toml          package metadata and scripts
+└── schema.sql              database schema
 ```
 
----
+## What is intentionally not here yet
 
-## 🗺️ Roadmap
+- Delete propagation from Keep into the library
+- Book-level rollups
+- Graph-style visualization
+- A polished mobile capture app of its own
 
-- [x] Core pipeline (process → store → embed → search)
-- [x] MCP server with 6 tools
-- [x] RAG query agent
-- [x] Google Keep automatic import (official API poller)
-- [ ] Knowledge graph visualisation
-- [ ] Book-level summaries
+That is deliberate. The project is currently optimized around capture, storage, and retrieval rather than around building a full reading platform.

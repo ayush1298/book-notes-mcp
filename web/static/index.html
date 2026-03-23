@@ -5,765 +5,1492 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover" />
   <title>Book Notes</title>
   <link rel="preconnect" href="https://fonts.googleapis.com" />
-  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Manrope:wght@400;500;600;700;800&family=Newsreader:opsz,wght@6..72,500;6..72,700&display=swap" rel="stylesheet" />
   <style>
-    /* ── Reset & tokens ───────────────────────────────────────── */
-    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+    *, *::before, *::after { box-sizing: border-box; }
 
     :root {
-      /* Refined Dark Theme Palette */
-      --bg: #030712; /* Deepest blue-black */
-      --surface: rgba(17, 24, 39, 0.6); /* Translucent slate */
-      --surface-solid: #111827;
-      --surface2: rgba(31, 41, 55, 0.5); /* Lighter translucent */
-      --surface3: rgba(55, 65, 81, 0.4);
-      --border: rgba(255, 255, 255, 0.08);
-      --border-highlight: rgba(255, 255, 255, 0.15);
-      
-      /* Vibrant Accents */
-      --accent1: #8b5cf6; /* Violet */
-      --accent2: #3b82f6; /* Blue */
-      --accent3: #ec4899; /* Pink */
-      --accent-g: linear-gradient(135deg, var(--accent1), var(--accent2));
-      --accent-g-warm: linear-gradient(135deg, var(--accent3), var(--accent1));
-      
-      /* Semantic Colors */
-      --green: #10b981;
-      --green-bg: rgba(16, 185, 129, 0.1);
-      --yellow: #f59e0b;
-      --yellow-bg: rgba(245, 158, 11, 0.1);
-      --red: #ef4444;
-      --red-bg: rgba(239, 68, 68, 0.1);
-      
-      /* Typography */
-      --text1: #f9fafb;
-      --text2: #9ca3af;
-      --text3: #6b7280;
-      
-      /* Geometry & Effects */
-      --radius-lg: 20px;
+      --paper: #f4efe6;
+      --paper-strong: #fffaf1;
+      --ink: #18201d;
+      --ink-soft: #4f5a56;
+      --line: rgba(24, 32, 29, 0.12);
+      --line-strong: rgba(24, 32, 29, 0.22);
+      --accent: #9b4d2f;
+      --accent-dark: #71361f;
+      --accent-soft: rgba(155, 77, 47, 0.1);
+      --teal: #24584f;
+      --teal-soft: rgba(36, 88, 79, 0.1);
+      --gold: #c28d2f;
+      --success: #1f7a62;
+      --error: #ae4332;
+      --surface: rgba(255, 250, 241, 0.84);
+      --surface-strong: rgba(255, 250, 241, 0.96);
+      --shadow: 0 20px 50px rgba(43, 31, 20, 0.08);
+      --shadow-soft: 0 8px 24px rgba(43, 31, 20, 0.06);
+      --radius-xl: 28px;
+      --radius-lg: 22px;
       --radius: 16px;
-      --radius-sm: 10px;
-      --shadow-sm: 0 4px 6px -1px rgba(0, 0, 0, 0.3);
-      --shadow: 0 10px 30px -5px rgba(0, 0, 0, 0.5);
-      --shadow-glow: 0 0 20px rgba(139, 92, 246, 0.2);
-      --backdrop: blur(16px);
-      --nav-h: 72px;
+      --radius-sm: 12px;
+      --nav-height: 78px;
     }
 
-    /* Global */
-    html, body { 
-      height: 100%; 
-      font-family: 'Inter', system-ui, sans-serif; 
-      background: var(--bg); 
-      color: var(--text1); 
-      overflow: hidden;
+    html, body {
+      margin: 0;
+      min-height: 100%;
+      background:
+        radial-gradient(circle at top left, rgba(194, 141, 47, 0.14), transparent 28%),
+        radial-gradient(circle at 85% 12%, rgba(36, 88, 79, 0.12), transparent 26%),
+        linear-gradient(180deg, #efe6d6 0%, #f4efe6 28%, #efe8dc 100%);
+      color: var(--ink);
+      font-family: "Manrope", system-ui, sans-serif;
       -webkit-font-smoothing: antialiased;
     }
 
-    /* Background decorative blobs */
-    body::before, body::after {
-      content: '';
-      position: absolute;
-      width: 300px;
-      height: 300px;
+    body::before {
+      content: "";
+      position: fixed;
+      inset: 0;
+      background-image:
+        linear-gradient(rgba(24, 32, 29, 0.025) 1px, transparent 1px),
+        linear-gradient(90deg, rgba(24, 32, 29, 0.025) 1px, transparent 1px);
+      background-size: 20px 20px;
+      mask-image: radial-gradient(circle at center, black 40%, transparent 92%);
+      pointer-events: none;
+      z-index: 0;
+    }
+
+    #app {
+      position: relative;
+      z-index: 1;
+      width: min(1180px, calc(100% - 28px));
+      margin: 24px auto 0;
+      padding-bottom: calc(var(--nav-height) + 28px);
+    }
+
+    .shell {
+      border: 1px solid rgba(24, 32, 29, 0.08);
+      border-radius: 32px;
+      background: linear-gradient(180deg, rgba(255, 250, 241, 0.94), rgba(250, 244, 233, 0.9));
+      box-shadow: var(--shadow);
+      overflow: hidden;
+      backdrop-filter: blur(16px);
+    }
+
+    .topbar {
+      display: flex;
+      align-items: center;
+      gap: 16px;
+      padding: 18px 22px;
+      border-bottom: 1px solid rgba(24, 32, 29, 0.08);
+      background: rgba(255, 250, 241, 0.78);
+      backdrop-filter: blur(12px);
+      position: sticky;
+      top: 0;
+      z-index: 5;
+    }
+
+    .brand-mark {
+      width: 48px;
+      height: 48px;
+      border-radius: 18px;
+      background:
+        linear-gradient(135deg, rgba(36, 88, 79, 0.95), rgba(155, 77, 47, 0.92));
+      display: grid;
+      place-items: center;
+      color: #fffaf1;
+      font-size: 22px;
+      box-shadow: 0 10px 24px rgba(36, 88, 79, 0.18);
+      flex-shrink: 0;
+    }
+
+    .brand-copy { min-width: 0; }
+    .eyebrow {
+      font-size: 11px;
+      text-transform: uppercase;
+      letter-spacing: 0.18em;
+      color: var(--ink-soft);
+      margin-bottom: 4px;
+    }
+    h1 {
+      margin: 0;
+      font-size: clamp(1.35rem, 2vw, 1.7rem);
+      line-height: 1;
+      font-weight: 800;
+      letter-spacing: -0.04em;
+    }
+    .brand-note {
+      margin: 4px 0 0;
+      font-size: 0.95rem;
+      color: var(--ink-soft);
+    }
+
+    .topbar-actions {
+      margin-left: auto;
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      flex-wrap: wrap;
+      justify-content: flex-end;
+    }
+
+    .status-pill,
+    .mini-pill {
+      border-radius: 999px;
+      padding: 10px 14px;
+      font-size: 0.78rem;
+      font-weight: 700;
+      letter-spacing: 0.02em;
+      border: 1px solid transparent;
+      background: var(--surface);
+      color: var(--ink);
+      display: inline-flex;
+      align-items: center;
+      gap: 8px;
+      white-space: nowrap;
+    }
+
+    .status-pill::before {
+      content: "";
+      width: 8px;
+      height: 8px;
       border-radius: 50%;
-      filter: blur(100px);
-      opacity: 0.15;
-      z-index: -1;
+      background: currentColor;
+    }
+
+    .status-pill.live {
+      background: rgba(31, 122, 98, 0.11);
+      border-color: rgba(31, 122, 98, 0.22);
+      color: var(--success);
+    }
+
+    .status-pill.offline {
+      background: rgba(174, 67, 50, 0.1);
+      border-color: rgba(174, 67, 50, 0.18);
+      color: var(--error);
+    }
+
+    .mini-pill {
+      background: rgba(194, 141, 47, 0.12);
+      border-color: rgba(194, 141, 47, 0.2);
+      color: var(--accent-dark);
+    }
+
+    .hero {
+      display: grid;
+      grid-template-columns: minmax(0, 1.35fr) minmax(300px, 0.9fr);
+      gap: 20px;
+      padding: 22px;
+      border-bottom: 1px solid rgba(24, 32, 29, 0.08);
+    }
+
+    .hero-panel,
+    .hero-aside,
+    .panel,
+    .result-block,
+    .note-card {
+      border: 1px solid rgba(24, 32, 29, 0.08);
+      border-radius: var(--radius-xl);
+      background: linear-gradient(180deg, rgba(255, 250, 241, 0.9), rgba(255, 251, 246, 0.72));
+      box-shadow: var(--shadow-soft);
+    }
+
+    .hero-panel {
+      padding: 26px;
+      position: relative;
+      overflow: hidden;
+    }
+
+    .hero-panel::after {
+      content: "";
+      position: absolute;
+      right: -70px;
+      bottom: -80px;
+      width: 240px;
+      height: 240px;
+      border-radius: 50%;
+      background: radial-gradient(circle, rgba(36, 88, 79, 0.12) 0%, transparent 70%);
       pointer-events: none;
     }
-    body::before {
-      top: -100px; left: -100px;
-      background: var(--accent1);
-    }
-    body::after {
-      bottom: 20%; right: -100px;
-      background: var(--accent2);
+
+    .hero-title {
+      max-width: 12ch;
+      margin: 0 0 12px;
+      font-family: "Newsreader", serif;
+      font-size: clamp(2.4rem, 5vw, 4.5rem);
+      line-height: 0.95;
+      font-weight: 700;
+      letter-spacing: -0.05em;
     }
 
-    /* ── Layout ───────────────────────────────────────────────── */
-    #app { display: flex; flex-direction: column; height: 100dvh; position: relative; }
-
-    /* Header */
-    header {
-      background: var(--surface);
-      backdrop-filter: var(--backdrop);
-      -webkit-backdrop-filter: var(--backdrop);
-      border-bottom: 1px solid var(--border);
-      padding: 16px 20px 12px;
-      display: flex; align-items: center; gap: 14px;
-      flex-shrink: 0;
-      z-index: 10;
-    }
-    .logo { 
-      width: 36px; height: 36px; 
-      background: var(--accent-g); 
-      border-radius: 12px; 
-      display: grid; place-items: center; 
-      font-size: 18px; 
-      box-shadow: 0 4px 12px rgba(139, 92, 246, 0.3);
-      flex-shrink:0; 
-    }
-    header .title-group { display: flex; flex-direction: column; }
-    header h1 { font-size: 18px; font-weight: 700; letter-spacing: -0.02em; line-height: 1.2; }
-    header .subtitle { font-size: 12px; color: var(--text2); font-weight: 500; }
-    
-    .sync-badge { 
-      margin-left: auto; 
-      background: var(--green-bg); 
-      border: 1px solid rgba(16,185,129,0.2); 
-      color: var(--green); 
-      font-size: 11px; font-weight: 600; 
-      padding: 4px 10px; border-radius: 20px; 
-      display: flex; align-items: center; gap: 4px;
-      box-shadow: 0 0 10px rgba(16,185,129,0.1);
-    }
-    .sync-badge::before {
-      content: ''; display: block; width: 6px; height: 6px;
-      background: currentColor; border-radius: 50%;
+    .hero-copy {
+      max-width: 56ch;
+      margin: 0;
+      font-size: 1.03rem;
+      line-height: 1.75;
+      color: var(--ink-soft);
     }
 
-    /* Scroll area */
-    main { 
-      flex: 1; overflow-y: auto; overflow-x: hidden;
-      padding: 20px; 
-      -webkit-overflow-scrolling: touch; 
-      scrollbar-width: none; /* Firefox */
+    .hero-metrics {
+      display: grid;
+      grid-template-columns: repeat(3, minmax(0, 1fr));
+      gap: 12px;
+      margin-top: 24px;
     }
-    main::-webkit-scrollbar { display: none; } /* Chrome/Safari */
 
-    /* Tab panels */
-    .tab { 
-      display: none; 
-      animation: fadeIn 0.3s ease-out forwards;
-      opacity: 0;
-      transform: translateY(10px);
+    .metric {
+      padding: 16px 18px;
+      border-radius: 18px;
+      background: rgba(255, 255, 255, 0.42);
+      border: 1px solid rgba(24, 32, 29, 0.08);
     }
-    .tab.active { display: block; }
-    
-    @keyframes fadeIn {
+
+    .metric-label {
+      font-size: 0.78rem;
+      text-transform: uppercase;
+      letter-spacing: 0.12em;
+      color: var(--ink-soft);
+      margin-bottom: 8px;
+    }
+
+    .metric-value {
+      font-size: 1.65rem;
+      font-weight: 800;
+      letter-spacing: -0.04em;
+    }
+
+    .hero-aside {
+      padding: 24px;
+      background:
+        linear-gradient(180deg, rgba(36, 88, 79, 0.06), rgba(255, 250, 241, 0.84)),
+        linear-gradient(180deg, rgba(255, 255, 255, 0.82), rgba(255, 255, 255, 0.52));
+    }
+
+    .aside-label {
+      font-size: 0.78rem;
+      text-transform: uppercase;
+      letter-spacing: 0.14em;
+      color: var(--teal);
+      margin-bottom: 12px;
+      font-weight: 800;
+    }
+
+    .flow-title {
+      margin: 0 0 12px;
+      font-family: "Newsreader", serif;
+      font-size: 2rem;
+      letter-spacing: -0.04em;
+    }
+
+    .flow-copy {
+      margin: 0 0 18px;
+      font-size: 0.97rem;
+      line-height: 1.7;
+      color: var(--ink-soft);
+    }
+
+    .flow-list {
+      display: grid;
+      gap: 12px;
+    }
+
+    .flow-item {
+      display: grid;
+      grid-template-columns: 40px 1fr;
+      gap: 12px;
+      align-items: start;
+      padding: 12px 0;
+      border-top: 1px solid rgba(24, 32, 29, 0.08);
+    }
+
+    .flow-item:first-child { border-top: 0; padding-top: 0; }
+
+    .flow-step {
+      width: 40px;
+      height: 40px;
+      border-radius: 14px;
+      display: grid;
+      place-items: center;
+      background: rgba(155, 77, 47, 0.12);
+      color: var(--accent-dark);
+      font-weight: 800;
+    }
+
+    .workspace {
+      display: grid;
+      grid-template-columns: 245px minmax(0, 1fr);
+      gap: 22px;
+      padding: 22px;
+    }
+
+    .rail {
+      display: grid;
+      gap: 12px;
+      align-content: start;
+    }
+
+    .rail-card {
+      border-radius: var(--radius-lg);
+      border: 1px solid rgba(24, 32, 29, 0.08);
+      background: rgba(255, 250, 241, 0.74);
+      padding: 16px;
+    }
+
+    .rail-title {
+      margin: 0 0 8px;
+      font-size: 0.95rem;
+      font-weight: 800;
+      letter-spacing: -0.02em;
+    }
+
+    .rail-copy {
+      margin: 0;
+      font-size: 0.9rem;
+      line-height: 1.6;
+      color: var(--ink-soft);
+    }
+
+    .tab-list {
+      display: grid;
+      gap: 8px;
+      margin-top: 12px;
+    }
+
+    .tab-button {
+      appearance: none;
+      border: 1px solid rgba(24, 32, 29, 0.08);
+      background: rgba(255, 255, 255, 0.44);
+      border-radius: 16px;
+      padding: 14px 16px;
+      text-align: left;
+      cursor: pointer;
+      font: inherit;
+      color: var(--ink);
+      transition: transform 180ms ease, border-color 180ms ease, background 180ms ease;
+    }
+
+    .tab-button:hover {
+      transform: translateY(-1px);
+      border-color: rgba(24, 32, 29, 0.18);
+    }
+
+    .tab-button.active {
+      background: linear-gradient(135deg, rgba(36, 88, 79, 0.13), rgba(155, 77, 47, 0.1));
+      border-color: rgba(36, 88, 79, 0.24);
+      box-shadow: inset 0 0 0 1px rgba(36, 88, 79, 0.08);
+    }
+
+    .tab-kicker {
+      display: block;
+      margin-bottom: 4px;
+      font-size: 0.73rem;
+      text-transform: uppercase;
+      letter-spacing: 0.14em;
+      color: var(--ink-soft);
+      font-weight: 800;
+    }
+
+    .tab-name {
+      font-size: 1rem;
+      font-weight: 800;
+      letter-spacing: -0.02em;
+    }
+
+    .tab-description {
+      display: block;
+      margin-top: 4px;
+      font-size: 0.86rem;
+      line-height: 1.5;
+      color: var(--ink-soft);
+    }
+
+    .panel-stack {
+      display: grid;
+      gap: 16px;
+      min-width: 0;
+    }
+
+    .panel {
+      display: none;
+      padding: 22px;
+      animation: fadeUp 220ms ease;
+    }
+
+    .panel.active { display: block; }
+
+    @keyframes fadeUp {
+      from { opacity: 0; transform: translateY(10px); }
       to { opacity: 1; transform: translateY(0); }
     }
 
-    /* Bottom nav */
-    nav {
-      height: var(--nav-h); flex-shrink: 0;
-      background: var(--surface);
-      backdrop-filter: var(--backdrop);
-      -webkit-backdrop-filter: var(--backdrop);
-      border-top: 1px solid var(--border);
-      display: flex; align-items: stretch;
-      padding-bottom: env(safe-area-inset-bottom);
-      z-index: 10;
+    .panel-header {
+      display: flex;
+      align-items: start;
+      justify-content: space-between;
+      gap: 16px;
+      margin-bottom: 18px;
     }
-    nav button {
-      flex: 1; background: none; border: none; cursor: pointer;
-      display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 6px;
-      color: var(--text3); font-size: 11px; font-weight: 600; font-family: inherit;
-      transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
-      -webkit-tap-highlight-color: transparent;
-      position: relative;
-    }
-    nav button .icon { font-size: 22px; line-height:1; transition: transform 0.2s; }
-    nav button.active { color: var(--text1); }
-    nav button.active .icon { 
-      transform: translateY(-2px);
-      filter: drop-shadow(0 2px 8px rgba(255,255,255,0.2)); 
-    }
-    /* Active indicator dot */
-    nav button::after {
-      content: ''; position: absolute; top: 0; left: 50%; transform: translateX(-50%);
-      width: 0; height: 3px; border-radius: 0 0 4px 4px;
-      background: var(--accent-g);
-      transition: width 0.2s;
-    }
-    nav button.active::after { width: 30%; }
 
+    .panel-header h2 {
+      margin: 0 0 6px;
+      font-family: "Newsreader", serif;
+      font-size: 2rem;
+      letter-spacing: -0.04em;
+    }
 
-    /* ── Cards (Glassmorphism) ────────────────────────────────── */
-    .card {
-      background: var(--surface2);
-      backdrop-filter: blur(12px);
-      -webkit-backdrop-filter: blur(12px);
-      border: 1px solid var(--border);
-      border-radius: var(--radius);
+    .panel-header p {
+      margin: 0;
+      color: var(--ink-soft);
+      line-height: 1.7;
+      max-width: 58ch;
+    }
+
+    .panel-badge {
+      border-radius: 999px;
+      padding: 10px 12px;
+      background: var(--accent-soft);
+      color: var(--accent-dark);
+      font-size: 0.8rem;
+      font-weight: 800;
+      white-space: nowrap;
+    }
+
+    .grid-two {
+      display: grid;
+      grid-template-columns: minmax(0, 1.2fr) minmax(260px, 0.8fr);
+      gap: 16px;
+    }
+
+    .subpanel {
+      border-radius: 20px;
+      border: 1px solid rgba(24, 32, 29, 0.08);
+      background: rgba(255, 255, 255, 0.46);
       padding: 18px;
+    }
+
+    .subpanel h3 {
+      margin: 0 0 12px;
+      font-size: 0.95rem;
+      font-weight: 800;
+      letter-spacing: -0.02em;
+    }
+
+    label {
+      display: block;
+      margin-bottom: 8px;
+      font-size: 0.76rem;
+      text-transform: uppercase;
+      letter-spacing: 0.12em;
+      color: var(--ink-soft);
+      font-weight: 800;
+    }
+
+    textarea,
+    input[type="text"] {
+      width: 100%;
+      border: 1px solid rgba(24, 32, 29, 0.12);
+      border-radius: 16px;
+      background: rgba(255, 250, 241, 0.8);
+      padding: 15px 16px;
+      color: var(--ink);
+      font: inherit;
+      line-height: 1.6;
+      outline: none;
+      transition: border-color 180ms ease, box-shadow 180ms ease, background 180ms ease;
+    }
+
+    textarea { min-height: 220px; resize: vertical; }
+
+    textarea:focus,
+    input[type="text"]:focus {
+      border-color: rgba(36, 88, 79, 0.35);
+      box-shadow: 0 0 0 4px rgba(36, 88, 79, 0.1);
+      background: rgba(255, 250, 241, 0.95);
+    }
+
+    textarea::placeholder,
+    input[type="text"]::placeholder {
+      color: rgba(79, 90, 86, 0.72);
+    }
+
+    .source-switch {
+      display: flex;
+      gap: 10px;
       margin-bottom: 16px;
-      box-shadow: var(--shadow-sm);
-      transition: transform 0.2s, border-color 0.2s, box-shadow 0.2s;
-    }
-    .card:active { transform: scale(0.98); border-color: var(--border-highlight); }
-    
-    .card-header { display: flex; align-items: flex-start; gap: 12px; margin-bottom: 12px; }
-    .card-icon { 
-      width: 40px; height: 40px; 
-      border-radius: 12px; 
-      display: grid; place-items: center; 
-      font-size: 20px; flex-shrink:0; 
-      box-shadow: inset 0 2px 4px rgba(255,255,255,0.1);
-    }
-    .card-icon.book { background: linear-gradient(135deg, rgba(124,58,237,0.2), rgba(124,58,237,0.05)); border: 1px solid rgba(124,58,237,0.1); }
-    .card-icon.keep { background: linear-gradient(135deg, rgba(245,158,11,0.2), rgba(245,158,11,0.05)); border: 1px solid rgba(245,158,11,0.1); }
-    
-    .card-meta { flex:1; min-width:0; }
-    .card-title { font-size: 15px; font-weight: 600; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; color: var(--text1); margin-bottom: 2px;}
-    .card-sub { font-size: 12px; color: var(--text2); }
-    
-    .card-body { font-size: 14px; color: var(--text2); line-height: 1.6; }
-    .card-body.collapsed { display: -webkit-box; -webkit-line-clamp: 3; line-clamp: 3; -webkit-box-orient: vertical; overflow: hidden; }
-    .card-footer { margin-top: 14px; display: flex; flex-wrap: wrap; gap: 8px; }
-
-    /* Tags */
-    .tag {
-      background: rgba(139, 92, 246, 0.1); 
-      border: 1px solid rgba(139, 92, 246, 0.2);
-      color: #c4b5fd; font-size: 11px; font-weight: 500;
-      padding: 4px 10px; border-radius: 20px; cursor: pointer;
-      transition: all 0.2s;
-    }
-    .tag:hover { background: rgba(139, 92, 246, 0.2); border-color: rgba(139, 92, 246, 0.4); }
-    .tag.active { 
-      background: var(--accent-g); 
-      border-color: transparent; 
-      color: #fff; 
-      box-shadow: 0 2px 8px rgba(139, 92, 246, 0.3);
     }
 
-    /* ── Inputs ───────────────────────────────────────────────── */
-    .input-group { margin-bottom: 16px; }
-    label { 
-      display: block; font-size: 12px; font-weight: 600; color: var(--text2); 
-      margin-bottom: 8px; 
+    .source-chip {
+      flex: 1;
+      border-radius: 16px;
+      border: 1px solid rgba(24, 32, 29, 0.1);
+      background: rgba(255, 255, 255, 0.5);
+      padding: 14px 12px;
+      cursor: pointer;
+      transition: border-color 180ms ease, transform 180ms ease, background 180ms ease;
+      text-align: center;
     }
-    textarea, input[type=text] {
-      width: 100%; 
-      background: var(--surface2); 
-      border: 1px solid var(--border);
-      border-radius: var(--radius-sm); 
-      color: var(--text1); font-family: inherit; font-size: 15px; line-height: 1.5;
-      padding: 14px 16px; 
-      transition: all 0.2s; outline: none; resize: vertical;
-      box-shadow: inset 0 2px 4px rgba(0,0,0,0.1);
-    }
-    textarea::placeholder, input[type=text]::placeholder { color: var(--text3); }
-    textarea:focus, input[type=text]:focus { 
-      border-color: var(--accent1); 
-      background: var(--surface-solid);
-      box-shadow: 0 0 0 3px rgba(139, 92, 246, 0.15);
-    }
-    textarea { min-height: 160px; }
 
-    /* ── Buttons ──────────────────────────────────────────────── */
+    .source-chip.active {
+      border-color: rgba(155, 77, 47, 0.28);
+      background: rgba(155, 77, 47, 0.12);
+      transform: translateY(-1px);
+    }
+
+    .source-chip strong {
+      display: block;
+      font-size: 0.95rem;
+      margin-bottom: 4px;
+    }
+
+    .source-chip span {
+      font-size: 0.82rem;
+      color: var(--ink-soft);
+    }
+
     .btn {
-      width: 100%; padding: 16px; border: none; border-radius: var(--radius-sm);
-      font-family: inherit; font-size: 16px; font-weight: 600; cursor: pointer;
-      transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1); -webkit-tap-highlight-color: transparent;
-      display: flex; align-items: center; justify-content: center; gap: 8px;
-    }
-    .btn:active { transform: scale(.98); }
-    .btn-primary { 
-      background: var(--accent-g); color: #fff; 
-      box-shadow: 0 4px 12px rgba(139, 92, 246, 0.2);
-    }
-    .btn-primary:hover { box-shadow: 0 6px 16px rgba(139, 92, 246, 0.3); filter: brightness(1.05); }
-    .btn-secondary { background: var(--surface3); color: var(--text1); border: 1px solid var(--border); }
-    .btn:disabled { opacity: .6; cursor: not-allowed; transform: none; box-shadow: none; filter: grayscale(0.2); }
-
-    /* ── Section titles ───────────────────────────────────────── */
-    .section-title { 
-      font-size: 12px; font-weight: 600; color: var(--text2); text-transform: uppercase; letter-spacing: 0.1em; 
-      margin: 20px 0 12px; display: flex; align-items: center; gap: 12px; 
-    }
-    .section-title::after { content:''; flex:1; height:1px; background: linear-gradient(90deg, var(--border), transparent); }
-
-    /* ── Status messages ──────────────────────────────────────── */
-    .status { 
-      font-size: 14px; font-weight: 500; padding: 14px 16px; border-radius: var(--radius-sm); 
-      margin-bottom: 16px; display: flex; align-items: center; gap: 10px;
-      animation: slideDown 0.3s ease-out;
-    }
-    @keyframes slideDown { from { opacity: 0; transform: translateY(-10px); } to { opacity: 1; transform: translateY(0); }}
-    
-    .status.loading { background: rgba(59, 130, 246, 0.1); border: 1px solid rgba(59, 130, 246, 0.2); color: #60a5fa; }
-    .status.success { background: var(--green-bg); border: 1px solid rgba(16,185,129,0.2); color: #34d399; }
-    .status.error   { background: var(--red-bg); border: 1px solid rgba(239,68,68,0.2); color: #f87171; }
-
-    /* ── Answer block (Ask AI) ────────────────────────────────── */
-    .answer-box {
-      background: linear-gradient(180deg, var(--surface2) 0%, var(--surface) 100%);
-      border: 1px solid var(--border); border-radius: var(--radius-lg);
-      padding: 20px; margin-bottom: 20px;
-      position: relative; overflow: hidden;
-      box-shadow: var(--shadow-sm);
-    }
-    /* Decorative AI glow inside answer box */
-    .answer-box::before {
-      content: ''; position: absolute; top: -20px; left: -20px; width: 100px; height: 100px;
-      background: radial-gradient(circle, rgba(139,92,246,0.2) 0%, transparent 70%);
-      pointer-events: none;
-    }
-    .answer-box h3 { font-size: 13px; color: var(--accent1); text-transform: uppercase; letter-spacing: .08em; margin-bottom: 12px; display:flex; align-items:center; gap:8px;}
-    .answer-box h3::before { content: '✨'; font-size: 16px; }
-    .answer-text { font-size: 15px; line-height: 1.7; white-space: pre-wrap; color: var(--text1); }
-
-    /* Similarity badge */
-    .sim-badge { 
-      font-size: 11px; font-weight: 700; padding: 3px 8px; border-radius: 6px; 
-      background: var(--surface3); border: 1px solid var(--border);
+      appearance: none;
+      border: 0;
+      border-radius: 16px;
+      padding: 15px 18px;
+      cursor: pointer;
+      font: inherit;
+      font-weight: 800;
+      letter-spacing: -0.01em;
+      transition: transform 180ms ease, box-shadow 180ms ease, opacity 180ms ease;
     }
 
-    /* ── Spinner ──────────────────────────────────────────────── */
-    .spinner { 
-      display: inline-block; width: 18px; height: 18px; 
-      border: 2px solid rgba(255,255,255,.2); border-top-color: #fff; 
-      border-radius: 50%; animation: spin 0.8s cubic-bezier(0.4, 0, 0.2, 1) infinite; 
+    .btn:hover { transform: translateY(-1px); }
+    .btn:disabled { opacity: 0.65; cursor: not-allowed; transform: none; }
+
+    .btn-primary {
+      width: 100%;
+      background: linear-gradient(135deg, var(--teal), #2f6a5f);
+      color: #fffaf1;
+      box-shadow: 0 14px 28px rgba(36, 88, 79, 0.18);
     }
+
+    .btn-secondary {
+      background: rgba(24, 32, 29, 0.06);
+      color: var(--ink);
+      border: 1px solid rgba(24, 32, 29, 0.08);
+    }
+
+    .status {
+      margin-top: 16px;
+      padding: 14px 16px;
+      border-radius: 16px;
+      font-size: 0.94rem;
+      font-weight: 700;
+      border: 1px solid transparent;
+      display: flex;
+      align-items: center;
+      gap: 10px;
+    }
+
+    .status.loading {
+      background: rgba(36, 88, 79, 0.09);
+      border-color: rgba(36, 88, 79, 0.15);
+      color: var(--teal);
+    }
+
+    .status.success {
+      background: rgba(31, 122, 98, 0.1);
+      border-color: rgba(31, 122, 98, 0.18);
+      color: var(--success);
+    }
+
+    .status.error {
+      background: rgba(174, 67, 50, 0.1);
+      border-color: rgba(174, 67, 50, 0.16);
+      color: var(--error);
+    }
+
+    .spinner {
+      display: inline-block;
+      width: 16px;
+      height: 16px;
+      border-radius: 50%;
+      border: 2px solid rgba(255, 250, 241, 0.45);
+      border-top-color: currentColor;
+      animation: spin 800ms linear infinite;
+    }
+
     @keyframes spin { to { transform: rotate(360deg); } }
 
-    /* ── Tag filter container ─────────────────────────────────── */
-    .tag-filters { 
-      display: flex; flex-wrap: nowrap; gap: 8px; margin-bottom: 16px; 
-      overflow-x: auto; padding-bottom: 4px;
-      scrollbar-width: none;
-      -webkit-overflow-scrolling: touch;
+    .result-block {
+      margin-top: 18px;
+      padding: 18px;
     }
-    .tag-filters::-webkit-scrollbar { display: none; }
-    .tag-filters .tag { flex-shrink: 0; padding: 6px 14px; font-size: 13px; }
 
-    /* ── Empty state ──────────────────────────────────────────── */
-    .empty { text-align: center; padding: 60px 20px; color: var(--text2); }
-    .empty .icon { font-size: 56px; margin-bottom: 16px; opacity: 0.8; filter: grayscale(0.5); }
-    .empty p { font-size: 15px; line-height: 1.5; }
-
-    /* ── Expand toggle ────────────────────────────────────────── */
-    .expand-btn { 
-      background: rgba(255,255,255,0.03); border: 1px solid transparent; 
-      color: var(--text2); font-size: 13px; font-weight: 500; font-family:inherit; 
-      cursor: pointer; padding: 6px 12px; margin-top: 10px; border-radius: 6px;
-      transition: all 0.2s; display: inline-flex; align-items: center; gap: 4px;
+    .result-title,
+    .section-title {
+      margin: 0 0 10px;
+      font-size: 0.8rem;
+      text-transform: uppercase;
+      letter-spacing: 0.14em;
+      color: var(--ink-soft);
+      font-weight: 800;
     }
-    .expand-btn:hover { background: rgba(255,255,255,0.06); color: var(--text1); }
 
-    /* ── Process result structured data ───────────────────────── */
-    .result-section { margin-top: 12px; background: rgba(0,0,0,0.2); padding: 12px; border-radius: 8px;}
-    .result-section h4 { font-size: 12px; color: var(--accent1); text-transform: uppercase; letter-spacing: .08em; margin-bottom: 8px; }
-    .idea-item { font-size: 14px; color: var(--text1); padding: 8px 0; border-bottom: 1px solid var(--border); line-height: 1.5; display: flex; align-items: flex-start; gap: 8px; }
-    .idea-item:last-child { border-bottom: none; }
-    .idea-item::before { content: '•'; color: var(--accent1); font-size: 18px; line-height: 1; }
-
-    /* ── Divider ──────────────────────────────────────────────── */
-    .divider { height:1px; background: linear-gradient(90deg, transparent, var(--border), transparent); margin: 24px 0; }
-
-    /* ── Source chips (Add Note Tab) ──────────────────────────── */
-    .source-selector { display: flex; gap: 10px; margin-bottom: 8px; }
-    .source-chip { 
-      flex: 1; padding: 10px; 
-      background: var(--surface2); border: 1px solid var(--border); border-radius: var(--radius-sm); 
-      text-align: center; font-size: 13px; font-weight: 600; cursor: pointer; 
-      transition: all 0.2s; color: var(--text2);
-      display: flex; flex-direction: column; align-items: center; gap: 4px;
+    .summary-box {
+      padding: 16px;
+      border-radius: 18px;
+      background: rgba(255, 255, 255, 0.52);
+      border: 1px solid rgba(24, 32, 29, 0.08);
+      line-height: 1.75;
     }
-    .source-chip .icon { font-size: 18px; }
-    .source-chip.active { 
-      background: rgba(139, 92, 246, 0.15); 
-      border-color: rgba(139, 92, 246, 0.5); 
-      color: #fff; 
-      box-shadow: 0 4px 12px rgba(139, 92, 246, 0.15);
+
+    .chip-row,
+    .tag-filters {
+      display: flex;
+      gap: 8px;
+      flex-wrap: wrap;
+    }
+
+    .tag {
+      border-radius: 999px;
+      border: 1px solid rgba(24, 32, 29, 0.1);
+      background: rgba(255, 255, 255, 0.56);
+      color: var(--ink);
+      font-size: 0.8rem;
+      font-weight: 700;
+      padding: 8px 12px;
+      cursor: pointer;
+    }
+
+    .tag.active {
+      background: rgba(36, 88, 79, 0.12);
+      border-color: rgba(36, 88, 79, 0.24);
+      color: var(--teal);
+    }
+
+    .list-block {
+      display: grid;
+      gap: 10px;
+      margin-top: 12px;
+    }
+
+    .list-item {
+      border-top: 1px solid rgba(24, 32, 29, 0.08);
+      padding-top: 10px;
+      line-height: 1.6;
+    }
+
+    .list-item:first-child {
+      border-top: 0;
+      padding-top: 0;
+    }
+
+    .answer-box {
+      padding: 22px;
+      border-radius: 24px;
+      background:
+        radial-gradient(circle at top right, rgba(194, 141, 47, 0.12), transparent 32%),
+        rgba(255, 250, 241, 0.82);
+      border: 1px solid rgba(24, 32, 29, 0.08);
+      line-height: 1.8;
+    }
+
+    .answer-text {
+      white-space: pre-wrap;
+      color: var(--ink);
+      font-size: 1rem;
+    }
+
+    .source-card {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      padding: 14px 16px;
+      border-radius: 18px;
+      background: rgba(255, 255, 255, 0.52);
+      border: 1px solid rgba(24, 32, 29, 0.08);
+      margin-top: 10px;
+    }
+
+    .source-card-title {
+      font-weight: 800;
+      margin-bottom: 3px;
+    }
+
+    .sim-badge {
+      margin-left: auto;
+      border-radius: 999px;
+      padding: 6px 10px;
+      font-size: 0.74rem;
+      font-weight: 800;
+      border: 1px solid rgba(24, 32, 29, 0.08);
+      background: rgba(255, 250, 241, 0.72);
+    }
+
+    .note-grid {
+      display: grid;
+      gap: 14px;
+      margin-top: 16px;
+    }
+
+    .note-card {
+      padding: 18px;
+    }
+
+    .note-head {
+      display: flex;
+      align-items: start;
+      gap: 14px;
+      margin-bottom: 14px;
+    }
+
+    .note-mark {
+      width: 44px;
+      height: 44px;
+      border-radius: 16px;
+      display: grid;
+      place-items: center;
+      flex-shrink: 0;
+      font-size: 1.1rem;
+      background: rgba(36, 88, 79, 0.1);
+      color: var(--teal);
+    }
+
+    .note-meta { min-width: 0; }
+    .note-title {
+      margin: 0 0 4px;
+      font-size: 1.02rem;
+      font-weight: 800;
+      letter-spacing: -0.02em;
+    }
+
+    .note-sub {
+      color: var(--ink-soft);
+      font-size: 0.86rem;
+    }
+
+    .note-body {
+      color: var(--ink-soft);
+      line-height: 1.75;
+    }
+
+    .collapsed {
+      display: -webkit-box;
+      -webkit-line-clamp: 3;
+      line-clamp: 3;
+      -webkit-box-orient: vertical;
+      overflow: hidden;
+    }
+
+    .utility-row {
+      display: flex;
+      gap: 10px;
+      flex-wrap: wrap;
+      align-items: center;
+      margin-top: 14px;
+    }
+
+    .link-btn,
+    .expand-btn {
+      appearance: none;
+      border: 0;
+      background: rgba(24, 32, 29, 0.06);
+      color: var(--ink);
+      border-radius: 999px;
+      padding: 10px 13px;
+      cursor: pointer;
+      font: inherit;
+      font-size: 0.82rem;
+      font-weight: 800;
+    }
+
+    .link-btn {
+      background: rgba(36, 88, 79, 0.12);
+      color: var(--teal);
+      margin-left: auto;
+    }
+
+    .connections {
+      margin-top: 16px;
+      padding-top: 14px;
+      border-top: 1px solid rgba(24, 32, 29, 0.08);
+      display: none;
+    }
+
+    .connection-card {
+      padding: 12px 14px;
+      border-radius: 16px;
+      border: 1px solid rgba(24, 32, 29, 0.08);
+      background: rgba(255, 255, 255, 0.48);
+      margin-top: 10px;
+      cursor: pointer;
+    }
+
+    .empty {
+      padding: 42px 20px;
+      border-radius: 24px;
+      text-align: center;
+      color: var(--ink-soft);
+      border: 1px dashed rgba(24, 32, 29, 0.16);
+      background: rgba(255, 255, 255, 0.36);
+      line-height: 1.8;
+    }
+
+    .mobile-dock {
+      position: fixed;
+      left: 50%;
+      transform: translateX(-50%);
+      bottom: 14px;
+      width: min(560px, calc(100% - 20px));
+      background: rgba(255, 250, 241, 0.92);
+      border: 1px solid rgba(24, 32, 29, 0.1);
+      border-radius: 24px;
+      box-shadow: var(--shadow);
+      display: none;
+      padding: 8px;
+      gap: 8px;
+      z-index: 10;
+      backdrop-filter: blur(14px);
+    }
+
+    .mobile-dock button {
+      flex: 1;
+      border: 0;
+      background: transparent;
+      padding: 10px 8px;
+      border-radius: 18px;
+      font: inherit;
+      font-size: 0.76rem;
+      font-weight: 800;
+      color: var(--ink-soft);
+    }
+
+    .mobile-dock button.active {
+      background: rgba(36, 88, 79, 0.12);
+      color: var(--teal);
+    }
+
+    @media (max-width: 1024px) {
+      .hero,
+      .workspace,
+      .grid-two {
+        grid-template-columns: 1fr;
+      }
+
+      .rail {
+        order: 2;
+      }
+    }
+
+    @media (max-width: 720px) {
+      #app {
+        width: calc(100% - 14px);
+        margin-top: 10px;
+      }
+
+      .shell { border-radius: 26px; }
+      .topbar,
+      .hero,
+      .workspace { padding: 16px; }
+
+      .topbar {
+        align-items: start;
+        flex-wrap: wrap;
+      }
+
+      .topbar-actions {
+        margin-left: 0;
+        width: 100%;
+        justify-content: flex-start;
+      }
+
+      .hero-metrics {
+        grid-template-columns: 1fr;
+      }
+
+      .rail {
+        display: none;
+      }
+
+      .mobile-dock {
+        display: flex;
+      }
+
+      #app {
+        padding-bottom: calc(var(--nav-height) + 54px);
+      }
     }
   </style>
 </head>
 <body>
-<div id="app">
-
-  <!-- Header -->
-  <header>
-    <div class="logo">✦</div>
-    <div class="title-group">
-      <h1>Book Notes</h1>
-      <div class="subtitle">AI Knowledge Base</div>
-    </div>
-    <span class="sync-badge" id="syncBadge">Live</span>
-  </header>
-
-  <!-- Scrollable content -->
-  <main id="mainContent">
-
-    <!-- ── Tab: Add Note ─────────────────────────────────── -->
-    <div class="tab active" id="tab-add">
-      <div class="input-group">
-        <label>Source</label>
-        <div class="source-selector">
-          <div class="source-chip active" data-source="manual" onclick="selectSource(this)">
-            <span class="icon">✍️</span><span>Manual</span>
-          </div>
-          <div class="source-chip" data-source="keep" onclick="selectSource(this)">
-            <span class="icon">📌</span><span>Keep</span>
-          </div>
+  <div id="app">
+    <div class="shell">
+      <header class="topbar">
+        <div class="brand-mark">B</div>
+        <div class="brand-copy">
+          <div class="eyebrow">Reading Desk</div>
+          <h1>Book Notes</h1>
+          <p class="brand-note">Capture on your phone. Distill once. Keep the useful parts searchable.</p>
         </div>
-      </div>
-      <div class="input-group">
-        <label>Note text</label>
-        <textarea id="noteText" placeholder="Paste text from Google Keep, type notes, or paste OCR text from a book photo…"></textarea>
-      </div>
-      <button class="btn btn-primary" id="processBtn" onclick="processNote()">Process Note</button>
-      <div id="processResult"></div>
-    </div>
+        <div class="topbar-actions">
+          <span class="mini-pill" id="lastRefresh">Waiting for first sync</span>
+          <span class="status-pill live" id="syncBadge">Connected</span>
+        </div>
+      </header>
 
-    <!-- ── Tab: Ask AI ───────────────────────────────────── -->
-    <div class="tab" id="tab-ask">
-      <div class="input-group">
-        <label>Your question</label>
-        <textarea id="askText" placeholder="What have I read about habits?&#10;What did I learn about decision making?&#10;Summarise what I know about focus…" style="min-height:100px;"></textarea>
-      </div>
-      <button class="btn btn-primary" id="askBtn" onclick="askAI()">Ask AI</button>
-      <div id="askResult"></div>
-    </div>
-
-    <!-- ── Tab: Search ───────────────────────────────────── -->
-    <div class="tab" id="tab-search">
-      <div class="input-group">
-        <label>Semantic search</label>
-        <input type="text" id="searchText" placeholder="compound interest, decision making, habits…" onkeydown="if(event.key==='Enter') doSearch()" />
-      </div>
-      <button class="btn btn-primary" onclick="doSearch()">Search</button>
-      <div id="searchResult" style="margin-top:16px;"></div>
-    </div>
-
-    <!-- ── Tab: Browse ───────────────────────────────────── -->
-    <div class="tab" id="tab-browse">
-      <div class="tag-filters" id="tagFilters"></div>
-      <div id="browseResult"></div>
-    </div>
-
-  </main>
-
-  <!-- Bottom nav -->
-  <nav>
-    <button class="active" onclick="switchTab('add', this)">
-      <span class="icon">✏️</span>Add Note
-    </button>
-    <button onclick="switchTab('ask', this)">
-      <span class="icon">💬</span>Ask AI
-    </button>
-    <button onclick="switchTab('search', this)">
-      <span class="icon">🔍</span>Search
-    </button>
-    <button onclick="switchTab('browse', this)">
-      <span class="icon">📚</span>Browse
-    </button>
-  </nav>
-
-</div>
-
-<script>
-  // ── Config ──────────────────────────────────────────────────────
-  const API = '';  // same origin — empty = relative URLs
-
-  // ── State ───────────────────────────────────────────────────────
-  let currentSource = 'manual';
-  let activeTag = null;
-  let allNotes = [];
-
-  // ── Tab switching ────────────────────────────────────────────────
-  function switchTab(name, btn) {
-    document.querySelectorAll('.tab').forEach(t => t.classList.remove('active'));
-    document.querySelectorAll('nav button').forEach(b => b.classList.remove('active'));
-    document.getElementById('tab-' + name).classList.add('active');
-    btn.classList.add('active');
-    if (name === 'browse') loadBrowse();
-  }
-
-  // ── Source selector ──────────────────────────────────────────────
-  function selectSource(el) {
-    document.querySelectorAll('.source-chip').forEach(c => c.classList.remove('active'));
-    el.classList.add('active');
-    currentSource = el.dataset.source;
-  }
-
-  // ── Utilities ────────────────────────────────────────────────────
-  function timeAgo(iso) {
-    if (!iso) return '';
-    const d = new Date(iso), now = new Date();
-    const s = Math.round((now - d) / 1000);
-    if (s < 60) return 'just now';
-    if (s < 3600) return Math.floor(s/60) + 'm ago';
-    if (s < 86400) return Math.floor(s/3600) + 'h ago';
-    return Math.floor(s/86400) + 'd ago';
-  }
-
-  function simColor(score) {
-    if (score >= 0.7) return '#10b981';
-    if (score >= 0.5) return '#f59e0b';
-    return '#94a3b8';
-  }
-
-  function tagChips(tags) {
-    if (!tags || !tags.length) return '';
-    return tags.slice(0,5).map(t =>
-      `<span class="tag" onclick="filterByTag('${t}')">#${t}</span>`
-    ).join('');
-  }
-
-  function setBtn(id, loading, text) {
-    const btn = document.getElementById(id);
-    btn.disabled = loading;
-    btn.innerHTML = loading ? `<span class="spinner"></span>${text}` : text;
-  }
-
-  // ── Process Note ─────────────────────────────────────────────────
-  async function processNote() {
-    const text = document.getElementById('noteText').value.trim();
-    if (!text) return;
-
-    setBtn('processBtn', true, 'Processing…');
-    document.getElementById('processResult').innerHTML =
-      '<div class="status loading">🧠 Summarising and extracting insights…</div>';
-
-    try {
-      const res = await fetch(`${API}/api/process`, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ raw_text: text, source: currentSource })
-      });
-      const data = await res.json();
-      if (!res.ok) throw new Error(data.detail || 'Error');
-
-      const ideasHTML = (data.ideas || []).map(i =>
-        `<div class="idea-item">${i}</div>`
-      ).join('');
-      const actionsHTML = (data.actions || []).map(a =>
-        `<div class="idea-item">${a}</div>`
-      ).join('');
-
-      document.getElementById('processResult').innerHTML = `
-        <div class="divider"></div>
-        <div class="status success">✅ Note stored successfully!</div>
-        <div class="card">
-          <div class="card-header">
-            <div class="card-icon book">📖</div>
-            <div class="card-meta">
-              <div class="card-title">${data.book_title || 'Unknown book'}</div>
-              <div class="card-sub">${(data.tags||[]).slice(0,4).map(t=>'#'+t).join(' ')}</div>
+      <section class="hero">
+        <div class="hero-panel">
+          <p class="eyebrow">Personal knowledge layer</p>
+          <h2 class="hero-title">Turn scattered reading notes into a working system.</h2>
+          <p class="hero-copy">
+            This dashboard is the practical side of the project: drop in raw notes, ask questions across your shelf,
+            and review what the pipeline has already cleaned up. The intent is not to feel like a demo. It should feel like a desk you return to.
+          </p>
+          <div class="hero-metrics">
+            <div class="metric">
+              <div class="metric-label">Notes in shelf</div>
+              <div class="metric-value" id="metricNotes">0</div>
+            </div>
+            <div class="metric">
+              <div class="metric-label">Tags tracked</div>
+              <div class="metric-value" id="metricTags">0</div>
+            </div>
+            <div class="metric">
+              <div class="metric-label">Latest source</div>
+              <div class="metric-value" id="metricSource">Manual</div>
             </div>
           </div>
-          <div class="card-body">${data.summary || ''}</div>
-          <div class="result-section">
-            ${ideasHTML ? '<h4>Key Ideas</h4>' + ideasHTML : ''}
-            ${actionsHTML ? '<h4>Action Items</h4>' + actionsHTML : ''}
-          </div>
-          <div class="card-footer">${tagChips(data.tags)}</div>
-        </div>`;
-      document.getElementById('noteText').value = '';
-    } catch (e) {
-      document.getElementById('processResult').innerHTML =
-        `<div class="status error">❌ ${e.message}</div>`;
-    }
-    setBtn('processBtn', false, 'Process Note');
-  }
-
-  // ── Ask AI ───────────────────────────────────────────────────────
-  async function askAI() {
-    const q = document.getElementById('askText').value.trim();
-    if (!q) return;
-
-    setBtn('askBtn', true, 'Thinking…');
-    document.getElementById('askResult').innerHTML =
-      '<div class="status loading">🤖 Searching your notes and generating answer…</div>';
-
-    try {
-      const res = await fetch(`${API}/api/ask`, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ question: q })
-      });
-      const data = await res.json();
-      if (!res.ok) throw new Error(data.detail || 'Error');
-
-      const sourcesHTML = (data.sources || []).map(s => `
-        <div class="card" style="margin-bottom:8px; padding:12px;">
-          <div style="display:flex; align-items:center; gap:8px;">
-            <span style="font-size:13px; font-weight:500; flex:1;">${s.book_title || 'Unknown book'}</span>
-            <span class="sim-badge" style="color:${simColor(s.similarity)}">${Math.round(s.similarity*100)}%</span>
-          </div>
-        </div>`).join('');
-
-      document.getElementById('askResult').innerHTML = `
-        <div class="divider"></div>
-        <div class="answer-box">
-          <h3>Answer</h3>
-          <div class="answer-text">${data.answer || 'No answer found.'}</div>
         </div>
-        ${sourcesHTML ? '<div class="section-title">Sources</div>' + sourcesHTML : ''}`;
-    } catch (e) {
-      document.getElementById('askResult').innerHTML =
-        `<div class="status error">❌ ${e.message}</div>`;
+
+        <aside class="hero-aside">
+          <div class="aside-label">Workflow</div>
+          <h3 class="flow-title">Keep capture light.</h3>
+          <p class="flow-copy">
+            The system works best when the phone app is just your inbox and this app does the heavier organizing.
+          </p>
+          <div class="flow-list">
+            <div class="flow-item">
+              <div class="flow-step">01</div>
+              <div>
+                <strong>Capture anywhere</strong>
+                <div class="rail-copy">Type, record, scan, or paste from Google Keep.</div>
+              </div>
+            </div>
+            <div class="flow-item">
+              <div class="flow-step">02</div>
+              <div>
+                <strong>Process once</strong>
+                <div class="rail-copy">Summaries, ideas, actions, and tags are extracted in one pass.</div>
+              </div>
+            </div>
+            <div class="flow-item">
+              <div class="flow-step">03</div>
+              <div>
+                <strong>Retrieve later</strong>
+                <div class="rail-copy">Search semantically or ask direct questions across the shelf.</div>
+              </div>
+            </div>
+          </div>
+        </aside>
+      </section>
+
+      <section class="workspace">
+        <aside class="rail">
+          <div class="rail-card">
+            <h3 class="rail-title">Modes</h3>
+            <p class="rail-copy">Each view is tuned for a different moment: capture, synthesis, retrieval, or browsing.</p>
+            <div class="tab-list">
+              <button class="tab-button active" data-tab-button="capture" onclick="switchTab('capture', this)">
+                <span class="tab-kicker">Write</span>
+                <span class="tab-name">Capture</span>
+                <span class="tab-description">Send raw notes into the pipeline.</span>
+              </button>
+              <button class="tab-button" data-tab-button="ask" onclick="switchTab('ask', this)">
+                <span class="tab-kicker">Question</span>
+                <span class="tab-name">Ask</span>
+                <span class="tab-description">Get a synthesized answer from your shelf.</span>
+              </button>
+              <button class="tab-button" data-tab-button="search" onclick="switchTab('search', this)">
+                <span class="tab-kicker">Retrieve</span>
+                <span class="tab-name">Search</span>
+                <span class="tab-description">Find notes semantically, not by exact phrasing.</span>
+              </button>
+              <button class="tab-button" data-tab-button="library" onclick="switchTab('library', this)">
+                <span class="tab-kicker">Browse</span>
+                <span class="tab-name">Library</span>
+                <span class="tab-description">Read back what is already stored.</span>
+              </button>
+            </div>
+          </div>
+
+          <div class="rail-card">
+            <h3 class="rail-title">Current posture</h3>
+            <p class="rail-copy">
+              Keep is the inbox. This app is the place where notes become durable: searchable, linked, and worth keeping.
+            </p>
+          </div>
+        </aside>
+
+        <div class="panel-stack">
+          <section class="panel active" id="tab-capture">
+            <div class="panel-header">
+              <div>
+                <h2>Capture a note</h2>
+                <p>Paste raw text, dump a transcript, or review something copied from Keep. The pipeline will normalize it into a shelf-ready note.</p>
+              </div>
+              <div class="panel-badge">Process</div>
+            </div>
+
+            <div class="grid-two">
+              <div class="subpanel">
+                <label>Source</label>
+                <div class="source-switch">
+                  <button class="source-chip active" data-source="manual" onclick="selectSource(this)">
+                    <strong>Manual</strong>
+                    <span>Typed or pasted directly here</span>
+                  </button>
+                  <button class="source-chip" data-source="keep" onclick="selectSource(this)">
+                    <strong>Google Keep</strong>
+                    <span>Imported or copied from your inbox</span>
+                  </button>
+                </div>
+
+                <label for="noteText">Raw note text</label>
+                <textarea id="noteText" placeholder="Paste the note exactly as you captured it. Messy input is fine. OCR fragments, transcript errors, and half-finished phrasing are expected here."></textarea>
+
+                <div style="margin-top:16px;">
+                  <button class="btn btn-primary" id="processBtn" onclick="processNote()">Process into shelf</button>
+                </div>
+
+                <div id="processResult"></div>
+              </div>
+
+              <div class="subpanel">
+                <h3>What this mode does</h3>
+                <p class="rail-copy">
+                  The app extracts a summary, pulls out reusable ideas, suggests actions, assigns tags, stores the note, and refreshes its embeddings.
+                </p>
+                <div class="list-block">
+                  <div class="list-item"><strong>Best input:</strong> a raw note, not a polished paragraph.</div>
+                  <div class="list-item"><strong>Typical sources:</strong> highlighted passages, spoken reflections, OCR from pages, quick paraphrases.</div>
+                  <div class="list-item"><strong>Result:</strong> one durable note that is easier to retrieve later than the original capture.</div>
+                </div>
+              </div>
+            </div>
+          </section>
+
+          <section class="panel" id="tab-ask">
+            <div class="panel-header">
+              <div>
+                <h2>Ask the shelf</h2>
+                <p>Use this when you remember the idea but not the exact book, or when you want a synthesized answer across multiple notes.</p>
+              </div>
+              <div class="panel-badge">RAG</div>
+            </div>
+
+            <div class="subpanel">
+              <label for="askText">Question</label>
+              <textarea id="askText" style="min-height: 120px;" placeholder="What have I read about habit design?&#10;Where have I written about focus and attention?&#10;Summarize my notes on leverage."></textarea>
+              <div style="margin-top:16px;">
+                <button class="btn btn-primary" id="askBtn" onclick="askAI()">Generate answer</button>
+              </div>
+              <div id="askResult"></div>
+            </div>
+          </section>
+
+          <section class="panel" id="tab-search">
+            <div class="panel-header">
+              <div>
+                <h2>Search semantically</h2>
+                <p>Search by meaning rather than exact wording. This is useful when your memory is directional but fuzzy.</p>
+              </div>
+              <div class="panel-badge">Vector</div>
+            </div>
+
+            <div class="subpanel">
+              <label for="searchText">Query</label>
+              <input type="text" id="searchText" placeholder="compound interest, systems thinking, deliberate practice" onkeydown="if(event.key==='Enter') doSearch()" />
+              <div style="margin-top:16px;">
+                <button class="btn btn-primary" onclick="doSearch()">Search shelf</button>
+              </div>
+              <div id="searchResult"></div>
+            </div>
+          </section>
+
+          <section class="panel" id="tab-library">
+            <div class="panel-header">
+              <div>
+                <h2>Browse the library</h2>
+                <p>Read back the notes already in the system, skim by tag, and discover related concepts without constructing a search query first.</p>
+              </div>
+              <div class="panel-badge">Archive</div>
+            </div>
+
+            <div class="subpanel">
+              <div class="tag-filters" id="tagFilters"></div>
+              <div id="browseResult"></div>
+            </div>
+          </section>
+        </div>
+      </section>
+    </div>
+
+    <nav class="mobile-dock">
+      <button class="active" data-mobile-tab="capture" onclick="switchTab('capture', this)">Capture</button>
+      <button data-mobile-tab="ask" onclick="switchTab('ask', this)">Ask</button>
+      <button data-mobile-tab="search" onclick="switchTab('search', this)">Search</button>
+      <button data-mobile-tab="library" onclick="switchTab('library', this)">Library</button>
+    </nav>
+  </div>
+
+  <script>
+    const API = "";
+
+    let currentSource = "manual";
+    let activeTag = null;
+    let allNotes = [];
+
+    function switchTab(name, trigger) {
+      document.querySelectorAll(".panel").forEach((panel) => panel.classList.remove("active"));
+      document.querySelectorAll("[data-tab-button]").forEach((button) => button.classList.remove("active"));
+      document.querySelectorAll("[data-mobile-tab]").forEach((button) => button.classList.remove("active"));
+
+      document.getElementById(`tab-${name}`).classList.add("active");
+
+      const railButton = document.querySelector(`[data-tab-button="${name}"]`);
+      const mobileButton = document.querySelector(`[data-mobile-tab="${name}"]`);
+      if (railButton) railButton.classList.add("active");
+      if (mobileButton) mobileButton.classList.add("active");
+
+      if (name === "library") {
+        loadBrowse();
+      }
+
+      if (trigger && trigger.dataset.mobileTab) {
+        document.querySelector(".shell").scrollIntoView({ behavior: "smooth", block: "start" });
+      }
     }
-    setBtn('askBtn', false, 'Ask AI');
-  }
 
-  // ── Search ───────────────────────────────────────────────────────
-  async function doSearch() {
-    const q = document.getElementById('searchText').value.trim();
-    if (!q) return;
+    function selectSource(element) {
+      document.querySelectorAll(".source-chip").forEach((chip) => chip.classList.remove("active"));
+      element.classList.add("active");
+      currentSource = element.dataset.source;
+    }
 
-    document.getElementById('searchResult').innerHTML =
-      '<div class="status loading">🔍 Searching…</div>';
+    function timeAgo(iso) {
+      if (!iso) return "";
+      const date = new Date(iso);
+      const seconds = Math.round((Date.now() - date.getTime()) / 1000);
+      if (seconds < 60) return "just now";
+      if (seconds < 3600) return `${Math.floor(seconds / 60)}m ago`;
+      if (seconds < 86400) return `${Math.floor(seconds / 3600)}h ago`;
+      if (seconds < 604800) return `${Math.floor(seconds / 86400)}d ago`;
+      return date.toLocaleDateString(undefined, { month: "short", day: "numeric" });
+    }
 
-    try {
-      const res = await fetch(`${API}/api/search`, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ query: q, limit: 8, threshold: 0.3 })
-      });
-      const data = await res.json();
-      if (!res.ok) throw new Error(data.detail || 'Error');
+    function formatSource(source) {
+      if (!source) return "Manual";
+      return source.replace(/-/g, " ").replace(/\b\w/g, (letter) => letter.toUpperCase());
+    }
 
-      const results = data.results || [];
-      if (!results.length) {
-        document.getElementById('searchResult').innerHTML =
-          '<div class="empty"><div class="icon">🔭</div><p>No matches found. Try a different query.</p></div>';
+    function simColor(score) {
+      if (score >= 0.7) return "#1f7a62";
+      if (score >= 0.5) return "#9b4d2f";
+      return "#5d6763";
+    }
+
+    function tagChips(tags) {
+      if (!tags || !tags.length) return "";
+      return tags.slice(0, 6).map((tag) =>
+        `<button class="tag" onclick="filterByTag('${escapeSingleQuotes(tag)}')">#${tag}</button>`
+      ).join("");
+    }
+
+    function setBtn(id, loading, label) {
+      const button = document.getElementById(id);
+      button.disabled = loading;
+      button.innerHTML = loading ? `<span class="spinner"></span>${label}` : label;
+    }
+
+    function escapeSingleQuotes(value) {
+      return String(value).replace(/'/g, "\\'");
+    }
+
+    function renderStatus(kind, text) {
+      return `<div class="status ${kind}">${text}</div>`;
+    }
+
+    function updateMetrics(notes) {
+      const tagSet = new Set();
+      notes.forEach((note) => (note.tags || []).forEach((tag) => tagSet.add(tag)));
+      document.getElementById("metricNotes").textContent = String(notes.length);
+      document.getElementById("metricTags").textContent = String(tagSet.size);
+      document.getElementById("metricSource").textContent = notes[0]?.source ? formatSource(notes[0].source) : "Manual";
+      document.getElementById("lastRefresh").textContent = notes.length
+        ? `Updated ${timeAgo(notes[0].created_at)}`
+        : "No notes yet";
+    }
+
+    async function refreshMetrics() {
+      try {
+        const response = await fetch(`${API}/api/notes?limit=50`);
+        if (!response.ok) throw new Error("offline");
+        const data = await response.json();
+        allNotes = data.notes || [];
+        updateMetrics(allNotes);
+      } catch (_) {
+        const badge = document.getElementById("syncBadge");
+        badge.classList.remove("live");
+        badge.classList.add("offline");
+        badge.textContent = "Offline";
+        document.getElementById("lastRefresh").textContent = "API unavailable";
+      }
+    }
+
+    async function processNote() {
+      const text = document.getElementById("noteText").value.trim();
+      if (!text) return;
+
+      setBtn("processBtn", true, "Processing");
+      document.getElementById("processResult").innerHTML = renderStatus("loading", "Running summarization, extraction, and storage.");
+
+      try {
+        const response = await fetch(`${API}/api/process`, {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ raw_text: text, source: currentSource })
+        });
+        const data = await response.json();
+        if (!response.ok) throw new Error(data.detail || "Unable to process note.");
+
+        const ideas = (data.ideas || []).map((idea) => `<div class="list-item">${idea}</div>`).join("");
+        const actions = (data.actions || []).map((action) => `<div class="list-item">${action}</div>`).join("");
+
+        document.getElementById("processResult").innerHTML = `
+          ${renderStatus("success", "Stored successfully. The note is now part of the shelf.")}
+          <div class="result-block">
+            <p class="result-title">Processed result</p>
+            <h3 style="margin:0 0 12px; font-size:1.25rem; letter-spacing:-0.03em;">${data.book_title || "Unknown book"}</h3>
+            <div class="summary-box">${data.summary || "No summary generated."}</div>
+            ${(data.tags || []).length ? `<div style="margin-top:14px;" class="chip-row">${tagChips(data.tags)}</div>` : ""}
+            ${ideas ? `<div style="margin-top:16px;"><p class="section-title">Ideas</p><div class="list-block">${ideas}</div></div>` : ""}
+            ${actions ? `<div style="margin-top:16px;"><p class="section-title">Actions</p><div class="list-block">${actions}</div></div>` : ""}
+          </div>
+        `;
+        document.getElementById("noteText").value = "";
+        await refreshMetrics();
+      } catch (error) {
+        document.getElementById("processResult").innerHTML = renderStatus("error", error.message);
+      }
+
+      setBtn("processBtn", false, "Process into shelf");
+    }
+
+    async function askAI() {
+      const question = document.getElementById("askText").value.trim();
+      if (!question) return;
+
+      setBtn("askBtn", true, "Thinking");
+      document.getElementById("askResult").innerHTML = renderStatus("loading", "Searching the shelf and composing an answer.");
+
+      try {
+        const response = await fetch(`${API}/api/ask`, {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ question })
+        });
+        const data = await response.json();
+        if (!response.ok) throw new Error(data.detail || "Unable to answer question.");
+
+        const sources = (data.sources || []).map((source) => `
+          <div class="source-card">
+            <div>
+              <div class="source-card-title">${source.book_title || "Unknown book"}</div>
+              <div class="note-sub">${source.summary || "No summary available."}</div>
+            </div>
+            <span class="sim-badge" style="color:${simColor(source.similarity)}">${Math.round(source.similarity * 100)}%</span>
+          </div>
+        `).join("");
+
+        document.getElementById("askResult").innerHTML = `
+          <div class="result-block">
+            <p class="result-title">Answer</p>
+            <div class="answer-box">
+              <div class="answer-text">${data.answer || "No answer found."}</div>
+            </div>
+            ${sources ? `<div style="margin-top:18px;"><p class="section-title">Supporting notes</p>${sources}</div>` : ""}
+          </div>
+        `;
+      } catch (error) {
+        document.getElementById("askResult").innerHTML = renderStatus("error", error.message);
+      }
+
+      setBtn("askBtn", false, "Generate answer");
+    }
+
+    async function doSearch() {
+      const query = document.getElementById("searchText").value.trim();
+      if (!query) return;
+
+      document.getElementById("searchResult").innerHTML = renderStatus("loading", "Searching for semantically related notes.");
+
+      try {
+        const response = await fetch(`${API}/api/search`, {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ query, limit: 8, threshold: 0.3 })
+        });
+        const data = await response.json();
+        if (!response.ok) throw new Error(data.detail || "Unable to search notes.");
+
+        const results = data.results || [];
+        if (!results.length) {
+          document.getElementById("searchResult").innerHTML = `<div class="empty">No close matches yet. Try a broader concept or a different phrasing.</div>`;
+          return;
+        }
+
+        document.getElementById("searchResult").innerHTML = `
+          <div class="note-grid">
+            ${results.map((note) => renderNoteCard(note, { showSimilarity: true })).join("")}
+          </div>
+        `;
+      } catch (error) {
+        document.getElementById("searchResult").innerHTML = renderStatus("error", error.message);
+      }
+    }
+
+    async function loadBrowse() {
+      document.getElementById("browseResult").innerHTML = renderStatus("loading", "Loading stored notes.");
+
+      try {
+        const url = activeTag
+          ? `${API}/api/notes?limit=50&tag=${encodeURIComponent(activeTag)}`
+          : `${API}/api/notes?limit=50`;
+        const response = await fetch(url);
+        const data = await response.json();
+        if (!response.ok) throw new Error(data.detail || "Unable to load notes.");
+        allNotes = data.notes || [];
+        renderNotes(allNotes);
+        buildTagFilters(allNotes);
+        updateMetrics(allNotes);
+      } catch (error) {
+        document.getElementById("browseResult").innerHTML = renderStatus("error", error.message);
+      }
+    }
+
+    function buildTagFilters(notes) {
+      const counts = {};
+      notes.forEach((note) => (note.tags || []).forEach((tag) => { counts[tag] = (counts[tag] || 0) + 1; }));
+      const sorted = Object.entries(counts).sort((left, right) => right[1] - left[1]).slice(0, 12);
+
+      document.getElementById("tagFilters").innerHTML = [
+        `<button class="tag ${!activeTag ? "active" : ""}" onclick="filterByTag(null)">All (${notes.length})</button>`,
+        ...sorted.map(([tag, count]) =>
+          `<button class="tag ${activeTag === tag ? "active" : ""}" onclick="filterByTag('${escapeSingleQuotes(tag)}')">#${tag} (${count})</button>`
+        )
+      ].join("");
+    }
+
+    function filterByTag(tag) {
+      activeTag = tag;
+      loadBrowse();
+    }
+
+    function renderNotes(notes) {
+      if (!notes.length) {
+        document.getElementById("browseResult").innerHTML = `<div class="empty">No notes yet. Process one raw note and this view becomes useful immediately.</div>`;
         return;
       }
 
-      document.getElementById('searchResult').innerHTML = results.map(r => `
-        <div class="card">
-          <div class="card-header">
-            <div class="card-icon book">📖</div>
-            <div class="card-meta">
-              <div class="card-title">${r.book_title || 'Unknown book'}</div>
-              <div class="card-sub">${timeAgo(r.created_at)}</div>
+      document.getElementById("browseResult").innerHTML = `<div class="note-grid">${notes.map((note, index) => renderBrowseCard(note, index)).join("")}</div>`;
+    }
+
+    function renderNoteCard(note, options = {}) {
+      return `
+        <article class="note-card">
+          <div class="note-head">
+            <div class="note-mark">${note.source === "keep" ? "K" : "B"}</div>
+            <div class="note-meta">
+              <h3 class="note-title">${note.book_title || "Untitled note"}</h3>
+              <div class="note-sub">${timeAgo(note.created_at)} · ${formatSource(note.source)}</div>
             </div>
-            <span class="sim-badge" style="color:${simColor(r.similarity)}">${Math.round(r.similarity*100)}% match</span>
+            ${options.showSimilarity ? `<span class="sim-badge" style="color:${simColor(note.similarity)}">${Math.round(note.similarity * 100)}%</span>` : ""}
           </div>
-          <div class="card-body">${r.summary || ''}</div>
-          <div class="card-footer">${tagChips(r.tags)}</div>
-        </div>`).join('');
-    } catch (e) {
-      document.getElementById('searchResult').innerHTML =
-        `<div class="status error">❌ ${e.message}</div>`;
-    }
-  }
-
-  // ── Browse ───────────────────────────────────────────────────────
-  async function loadBrowse() {
-    document.getElementById('browseResult').innerHTML =
-      '<div class="status loading">Loading your notes…</div>';
-    try {
-      const url = activeTag
-        ? `${API}/api/notes?limit=50&tag=${encodeURIComponent(activeTag)}`
-        : `${API}/api/notes?limit=50`;
-      const res = await fetch(url);
-      const data = await res.json();
-      allNotes = data.notes || [];
-      renderNotes(allNotes);
-      buildTagFilters(allNotes);
-    } catch (e) {
-      document.getElementById('browseResult').innerHTML =
-        `<div class="status error">❌ ${e.message}</div>`;
-    }
-  }
-
-  function buildTagFilters(notes) {
-    const tagCounts = {};
-    notes.forEach(n => (n.tags || []).forEach(t => tagCounts[t] = (tagCounts[t]||0)+1));
-    const sorted = Object.entries(tagCounts).sort((a,b)=>b[1]-a[1]).slice(0,12);
-    document.getElementById('tagFilters').innerHTML = [
-      `<span class="tag ${!activeTag?'active':''}" onclick="filterByTag(null)">All (${notes.length})</span>`,
-      ...sorted.map(([t,c]) =>
-        `<span class="tag ${activeTag===t?'active':''}" onclick="filterByTag('${t}')">#${t} (${c})</span>`)
-    ].join('');
-  }
-
-  function filterByTag(tag) {
-    activeTag = tag;
-    loadBrowse();
-  }
-
-  function renderNotes(notes) {
-    if (!notes.length) {
-      document.getElementById('browseResult').innerHTML =
-        '<div class="empty"><div class="icon">📭</div><p>No notes yet. Add your first note!</p></div>';
-      return;
-    }
-    document.getElementById('browseResult').innerHTML = notes.map((n, i) => `
-      <div class="card" id="note-${i}">
-        <div class="card-header">
-          <div class="card-icon ${n.source==='keep'?'keep':'book'}">${n.source==='keep'?'📌':'📖'}</div>
-          <div class="card-meta">
-            <div class="card-title">${n.book_title || 'Untitled note'}</div>
-            <div class="card-sub">${timeAgo(n.created_at)} · via ${n.source || 'manual'}</div>
-          </div>
-        </div>
-        <div class="card-body collapsed" id="body-${i}">${n.summary || ''}</div>
-        <button class="expand-btn" onclick="toggleExpand(${i})">Show more ↓</button>
-        <div id="connections-${i}" class="connections-container" style="display:none; margin-top: 16px;"></div>
-        <div class="card-footer">
-          ${tagChips(n.tags)}
-          <button class="expand-btn" style="margin: 0 0 0 auto; color: var(--accent2);" onclick="findConnections(${i}, '${n.id}')" id="conn-btn-${i}">🔗 Discover Connections</button>
-        </div>
-      </div>`).join('');
-  }
-
-  function toggleExpand(i) {
-    const body = document.getElementById(`body-${i}`);
-    const btn = body.nextElementSibling;
-    body.classList.toggle('collapsed');
-    btn.textContent = body.classList.contains('collapsed') ? 'Show more ↓' : 'Show less ↑';
-  }
-
-  async function findConnections(i, noteId) {
-    const container = document.getElementById(`connections-${i}`);
-    const btn = document.getElementById(`conn-btn-${i}`);
-    
-    // Toggle off if already showing
-    if (container.style.display === 'block') {
-      container.style.display = 'none';
-      btn.textContent = '🔗 Discover Connections';
-      return;
+          <div class="note-body">${note.summary || "No summary available."}</div>
+          ${(note.tags || []).length ? `<div class="utility-row">${tagChips(note.tags)}</div>` : ""}
+        </article>
+      `;
     }
 
-    btn.innerHTML = '<span class="spinner" style="width:12px;height:12px;border-width:2px;margin-right:6px;"></span>Thinking…';
-    container.style.display = 'block';
-    
-    try {
-      const res = await fetch(`${API}/api/notes/${noteId}/link?limit=3`);
-      const data = await res.json();
-      if (!res.ok) throw new Error(data.detail || 'Error');
-
-      const related = data.related || [];
-      if (!related.length) {
-        container.innerHTML = '<div class="status">No strong semantic connections found in your knowledge base yet.</div>';
-      } else {
-        container.innerHTML = `
-          <div class="section-title" style="margin: 10px 0;">Related Concepts</div>
-          ${related.map(r => `
-            <div style="padding: 10px; background: rgba(139, 92, 246, 0.05); border: 1px solid rgba(139, 92, 246, 0.2); border-radius: 8px; margin-bottom: 8px; cursor: pointer; transition: background 0.2s;" onmouseover="this.style.background='rgba(139, 92, 246, 0.1)'" onmouseout="this.style.background='rgba(139, 92, 246, 0.05)'" onclick="document.getElementById('searchText').value='${r.book_title.replace(/'/g, "\\'")}'; switchTab('search', document.querySelectorAll('nav button')[2]); doSearch();">
-              <div style="font-size: 13px; font-weight: 600; color: var(--text1); margin-bottom: 4px; display: flex; align-items: center; gap: 8px;">
-                 📖 ${r.book_title || 'Unknown Note'}
-                 <span class="sim-badge" style="margin-left:auto; color: ${simColor(r.similarity)}">${Math.round(r.similarity*100)}%</span>
-              </div>
-              <div style="font-size: 12px; color: var(--text2); display: -webkit-box; -webkit-line-clamp: 2; line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden;">${r.summary}</div>
+    function renderBrowseCard(note, index) {
+      return `
+        <article class="note-card" id="note-${index}">
+          <div class="note-head">
+            <div class="note-mark">${note.source === "keep" ? "K" : "B"}</div>
+            <div class="note-meta">
+              <h3 class="note-title">${note.book_title || "Untitled note"}</h3>
+              <div class="note-sub">${timeAgo(note.created_at)} · ${formatSource(note.source)}</div>
             </div>
-          `).join('')}
-        `;
+          </div>
+          <div class="note-body collapsed" id="body-${index}">${note.summary || "No summary available."}</div>
+          <div class="utility-row">
+            <button class="expand-btn" onclick="toggleExpand(${index})">Expand note</button>
+            ${tagChips(note.tags)}
+            <button class="link-btn" onclick="findConnections(${index}, '${note.id}')" id="conn-btn-${index}">Find connections</button>
+          </div>
+          <div class="connections" id="connections-${index}"></div>
+        </article>
+      `;
+    }
+
+    function toggleExpand(index) {
+      const body = document.getElementById(`body-${index}`);
+      const button = body.parentElement.querySelector(".expand-btn");
+      body.classList.toggle("collapsed");
+      button.textContent = body.classList.contains("collapsed") ? "Expand note" : "Collapse note";
+    }
+
+    async function findConnections(index, noteId) {
+      const container = document.getElementById(`connections-${index}`);
+      const button = document.getElementById(`conn-btn-${index}`);
+
+      if (container.style.display === "block") {
+        container.style.display = "none";
+        button.textContent = "Find connections";
+        return;
       }
-    } catch (e) {
-      container.innerHTML = `<div class="status error" style="margin-top:10px;">❌ ${e.message}</div>`;
-    }
-    btn.textContent = 'Close Connections ↑';
-  }
 
-  // ── Init ─────────────────────────────────────────────────────────
-  // Check API health on load
-  fetch(`${API}/api/notes?limit=1`).catch(() => {
-    const badge = document.getElementById('syncBadge');
-    badge.textContent = 'Offline';
-    badge.style.background = 'var(--red-bg)';
-    badge.style.color = 'var(--red)';
-    badge.style.borderColor = 'rgba(239,68,68,0.3)';
-    badge.style.boxShadow = 'none';
-  });
-</script>
+      button.innerHTML = `<span class="spinner"></span>Loading`;
+      container.style.display = "block";
+      container.innerHTML = renderStatus("loading", "Looking for nearby ideas.");
+
+      try {
+        const response = await fetch(`${API}/api/notes/${noteId}/link?limit=3`);
+        const data = await response.json();
+        if (!response.ok) throw new Error(data.detail || "Unable to load related notes.");
+
+        const related = data.related || [];
+        if (!related.length) {
+          container.innerHTML = `<div class="empty">No strong links yet for this note.</div>`;
+        } else {
+          container.innerHTML = related.map((note) => `
+            <div class="connection-card" onclick="openSearchFromConnection('${escapeSingleQuotes(note.book_title || "")}')">
+              <div class="source-card-title">${note.book_title || "Unknown note"}</div>
+              <div class="note-sub">${note.summary || ""}</div>
+            </div>
+          `).join("");
+        }
+      } catch (error) {
+        container.innerHTML = renderStatus("error", error.message);
+      }
+
+      button.textContent = "Close";
+    }
+
+    function openSearchFromConnection(title) {
+      document.getElementById("searchText").value = title;
+      switchTab("search");
+      doSearch();
+    }
+
+    refreshMetrics();
+  </script>
 </body>
 </html>
