@@ -50,7 +50,8 @@ NOTES_DIR: Path = (
 NOTES_DIR.mkdir(parents=True, exist_ok=True)
 
 # ── Google Keep sync ──────────────────────────────────────────────────────
-KEEP_CLIENT_ID: str = os.getenv("KEEP_CLIENT_ID", "")
-KEEP_CLIENT_SECRET: str = os.getenv("KEEP_CLIENT_SECRET", "")
-KEEP_TOKEN_FILE: Path = _path_env("KEEP_TOKEN_FILE", ".keep_oauth_token.json")
+GOOGLE_EMAIL: str = os.getenv("GOOGLE_EMAIL", "")
+GOOGLE_APP_PASSWORD: str = os.getenv("GOOGLE_APP_PASSWORD", "")
+KEEP_LABEL: str = os.getenv("KEEP_LABEL", "book-note")
+KEEP_TOKEN_FILE: Path = _path_env("KEEP_TOKEN_FILE", ".keep_token")
 KEEP_SYNC_INTERVAL_MINUTES: int = int(os.getenv("KEEP_SYNC_INTERVAL_MINUTES", "5"))

@@ -1,18 +1,17 @@
-"""Scheduled Google Keep sync job using the official Keep API."""
+"""Scheduled Google Keep sync job using gkeepapi."""
 from __future__ import annotations
 
 import json
 from typing import Any
 
 from book_server.ingestion import ingest_note
-from book_server.official_keep_client import connect, extract_text, iter_notes, modified_time
+from book_server.keep_client import list_notes
 from storage import db
 
 
-def sync_once() -> dict[str, Any]:
-    service = connect()
-    notes = list(iter_notes(service))
-    sync_state = db.list_keep_syncs([note["name"] for note in notes])
+def sync_once(label_name: str | None = None) -> dict[str, Any]:
+    notes = list_notes(label_name)
+    sync_state = db.list_keep_syncs([note["keep_id"] for note in notes])
 
     imported: list[dict[str, Any]] = []
     updated: list[dict[str, Any]] = []
@@ -20,9 +19,9 @@ def sync_once() -> dict[str, Any]:
     errors: list[dict[str, Any]] = []
 
     for keep_note in notes:
-        keep_note_id = keep_note["name"]
-        keep_updated_at = modified_time(keep_note)
-        text = extract_text(keep_note)
+        keep_note_id = keep_note["keep_id"]
+        keep_updated_at = keep_note.get("updated_at")
+        text = keep_note["text"]
         prior = sync_state.get(keep_note_id)
 
         if not text:
@@ -39,6 +38,7 @@ def sync_once() -> dict[str, Any]:
             result = ingest_note(
                 raw_text=text,
                 source="keep",
+                book_title=keep_note.get("title") or None,
                 existing_note_id=prior.get("note_id") if prior else None,
             )
             db.upsert_keep_sync(

@@ -168,8 +168,8 @@ TOOLS = [
     Tool(
         name="sync_from_keep",
         description=(
-            "[EXPERIMENTAL] Sync new notes from Google Keep into the knowledge base via gkeepapi. "
-            "May fail due to Google API restrictions. Use 'import_from_takeout' as a reliable alternative."
+            "Sync notes from Google Keep into the knowledge base via gkeepapi. "
+            "Imports new notes and updates already-imported notes when the Keep note changes."
         ),
         inputSchema={
             "type": "object",
@@ -179,17 +179,6 @@ TOOLS = [
                     "description": "Keep label to filter notes (default: value of KEEP_LABEL in .env, usually 'book-note')",
                 },
             },
-        },
-    ),
-    Tool(
-        name="sync_from_keep_api",
-        description=(
-            "Sync notes from the dedicated Google Keep account using the official Google Keep API. "
-            "Imports new notes and updates previously imported notes when the Keep note changes."
-        ),
-        inputSchema={
-            "type": "object",
-            "properties": {},
         },
     ),
     Tool(
@@ -312,45 +301,7 @@ async def _dispatch(name: str, args: dict) -> dict:
 
     # ── sync_from_keep ────────────────────────────────────────────────────
     elif name == "sync_from_keep":
-        from book_server.keep_client import fetch_unsynced_notes, mark_synced
-
-        label = args.get("label")  # None → uses KEEP_LABEL from .env
-        unsynced = fetch_unsynced_notes(label)
-
-        if not unsynced:
-            return {
-                "message": "No new Keep notes to sync.",
-                "synced_count": 0,
-                "notes": [],
-            }
-
-        synced_notes = []
-        errors = []
-
-        for keep_note in unsynced:
-            try:
-                result = ingest_note(raw_text=keep_note["text"], source="keep")
-                note_id = result["note_id"]
-                mark_synced(keep_note["keep_id"], note_id)
-
-                synced_notes.append({
-                    "keep_id": keep_note["keep_id"],
-                    "note_id": note_id,
-                    "book_title": result.get("book_title"),
-                    "tags": result.get("tags"),
-                })
-            except Exception as exc:
-                errors.append({"keep_id": keep_note["keep_id"], "error": str(exc)})
-
-        return {
-            "synced_count": len(synced_notes),
-            "notes": synced_notes,
-            "errors": errors,
-        }
-
-    # ── sync_from_keep_api ────────────────────────────────────────────────
-    elif name == "sync_from_keep_api":
-        return sync_keep_once()
+        return sync_keep_once(label_name=args.get("label"))
 
     # ── import_from_takeout ─────────────────────────────────────────────────
     elif name == "import_from_takeout":
@@ -370,7 +321,6 @@ async def _dispatch(name: str, args: dict) -> dict:
 
         # Deduplicate against already-processed source files via keep_synced table
         # (we use source_file as the keep_note_id for Takeout imports)
-        from book_server.keep_client import mark_synced
         from storage.db import _client as db_client
 
         existing = (
@@ -397,7 +347,12 @@ async def _dispatch(name: str, args: dict) -> dict:
             try:
                 result = ingest_note(raw_text=note["text"], source="keep-takeout")
                 note_id = result["note_id"]
-                mark_synced(note["source_file"], note_id)  # track by filename
+                db.upsert_keep_sync(
+                    keep_note_id=note["source_file"],
+                    note_id=note_id,
+                    keep_updated_at=note.get("created_at"),
+                    content_hash=db.content_hash(note["text"]),
+                )
 
                 imported_notes.append({
                     "source_file": note["source_file"],

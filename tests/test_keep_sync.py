@@ -8,33 +8,23 @@ def test_sync_once_imports_updates_and_skips(monkeypatch):
     ingest_calls: list[dict] = []
 
     notes = [
-        {"name": "notes/1", "title": "New"},
-        {"name": "notes/2", "title": "Same"},
-        {"name": "notes/3", "title": "Updated"},
+        {"keep_id": "keep-1", "title": "New", "text": "new text", "updated_at": "2026-03-24T11:00:00Z"},
+        {"keep_id": "keep-2", "title": "Same", "text": "same text", "updated_at": "2026-03-24T10:00:00Z"},
+        {"keep_id": "keep-3", "title": "Updated", "text": "changed text", "updated_at": "2026-03-24T11:30:00Z"},
     ]
     sync_state = {
-        "notes/2": {
-            "keep_note_id": "notes/2",
+        "keep-2": {
+            "keep_note_id": "keep-2",
             "note_id": "app-2",
             "keep_updated_at": "2026-03-24T10:00:00Z",
             "content_hash": "hash-same",
         },
-        "notes/3": {
-            "keep_note_id": "notes/3",
+        "keep-3": {
+            "keep_note_id": "keep-3",
             "note_id": "app-3",
             "keep_updated_at": "2026-03-24T09:00:00Z",
             "content_hash": "hash-old",
         },
-    }
-    texts = {
-        "notes/1": "new text",
-        "notes/2": "same text",
-        "notes/3": "changed text",
-    }
-    updated_times = {
-        "notes/1": "2026-03-24T11:00:00Z",
-        "notes/2": "2026-03-24T10:00:00Z",
-        "notes/3": "2026-03-24T11:30:00Z",
     }
     hashes = {
         "new text": "hash-new",
@@ -42,10 +32,7 @@ def test_sync_once_imports_updates_and_skips(monkeypatch):
         "changed text": "hash-newer",
     }
 
-    monkeypatch.setattr("book_server.keep_sync.connect", lambda: object())
-    monkeypatch.setattr("book_server.keep_sync.iter_notes", lambda service: iter(notes))
-    monkeypatch.setattr("book_server.keep_sync.extract_text", lambda note: texts[note["name"]])
-    monkeypatch.setattr("book_server.keep_sync.modified_time", lambda note: updated_times[note["name"]])
+    monkeypatch.setattr("book_server.keep_sync.list_notes", lambda label_name=None: notes)
     monkeypatch.setattr("book_server.keep_sync.db.list_keep_syncs", lambda keep_note_ids: sync_state)
     monkeypatch.setattr("book_server.keep_sync.db.content_hash", lambda text: hashes[text])
     monkeypatch.setattr(
@@ -68,17 +55,17 @@ def test_sync_once_imports_updates_and_skips(monkeypatch):
     assert result["error_count"] == 0
     assert ingest_calls[0]["existing_note_id"] is None
     assert ingest_calls[1]["existing_note_id"] == "app-3"
-    assert upserts[0]["keep_note_id"] == "notes/1"
-    assert upserts[1]["keep_note_id"] == "notes/3"
+    assert ingest_calls[0]["book_title"] == "New"
+    assert upserts[0]["keep_note_id"] == "keep-1"
+    assert upserts[1]["keep_note_id"] == "keep-3"
 
 
 def test_sync_once_skips_empty_notes(monkeypatch):
-    monkeypatch.setattr("book_server.keep_sync.connect", lambda: object())
-    monkeypatch.setattr("book_server.keep_sync.iter_notes", lambda service: iter([{"name": "notes/1"}]))
-    monkeypatch.setattr("book_server.keep_sync.extract_text", lambda note: "")
-    monkeypatch.setattr("book_server.keep_sync.modified_time", lambda note: "2026-03-24T11:00:00Z")
+    monkeypatch.setattr(
+        "book_server.keep_sync.list_notes",
+        lambda label_name=None: [{"keep_id": "keep-1", "text": "", "updated_at": "2026-03-24T11:00:00Z"}],
+    )
     monkeypatch.setattr("book_server.keep_sync.db.list_keep_syncs", lambda keep_note_ids: {})
-    monkeypatch.setattr("book_server.keep_sync.db.content_hash", lambda text: "hash")
 
     result = sync_once()
 

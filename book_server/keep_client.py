@@ -19,20 +19,27 @@ Note types handled:
 """
 from __future__ import annotations
 
-import os
 from pathlib import Path
 from typing import Any
 
-import gkeepapi
+try:
+    import gkeepapi
+    _HAS_GKEEPAPI = True
+except ImportError:  # pragma: no cover - exercised only in minimal test envs
+    gkeepapi = Any  # type: ignore[assignment]
+    _HAS_GKEEPAPI = False
 
 import config
-from storage.db import _client as db_client
 
 
 # ── Auth ────────────────────────────────────────────────────────────────────
 
 def _get_keep(email: str, app_password: str, token_file: Path) -> gkeepapi.Keep:
     """Return an authenticated gkeepapi.Keep instance, caching the token."""
+    if not _HAS_GKEEPAPI:
+        raise ModuleNotFoundError(
+            "gkeepapi is not installed. Install project dependencies before using Keep sync."
+        )
     import uuid
     import gpsoauth
 
@@ -70,17 +77,13 @@ def _get_keep(email: str, app_password: str, token_file: Path) -> gkeepapi.Keep:
 
 
 def connect() -> gkeepapi.Keep:
-    email = os.environ.get("GOOGLE_EMAIL", "")
-    app_password = os.environ.get("GOOGLE_APP_PASSWORD", "")
-    token_file = Path(os.environ.get("KEEP_TOKEN_FILE", ".keep_token"))
-
-    if not email or not app_password:
+    if not config.GOOGLE_EMAIL or not config.GOOGLE_APP_PASSWORD:
         raise EnvironmentError(
             "Missing GOOGLE_EMAIL or GOOGLE_APP_PASSWORD in .env\n"
             "Generate an App Password at: myaccount.google.com/security → App Passwords"
         )
 
-    return _get_keep(email, app_password, token_file)
+    return _get_keep(config.GOOGLE_EMAIL, config.GOOGLE_APP_PASSWORD, config.KEEP_TOKEN_FILE)
 
 
 # ── Fetch ────────────────────────────────────────────────────────────────────
@@ -106,28 +109,20 @@ def _extract_text(note: gkeepapi.node.TopLevelNode) -> str:
     return "\n".join(parts).strip()
 
 
-def _already_synced(keep_note_ids: list[str]) -> set[str]:
-    """Return the subset of keep_note_ids that are already in keep_synced."""
-    if not keep_note_ids:
-        return set()
-    result = (
-        db_client()
-        .table("keep_synced")
-        .select("keep_note_id")
-        .in_("keep_note_id", keep_note_ids)
-        .execute()
-    )
-    return {row["keep_note_id"] for row in (result.data or [])}
+def _timestamps(note: gkeepapi.node.TopLevelNode) -> tuple[str | None, str | None]:
+    created = note.timestamps.created.isoformat() if note.timestamps.created else None
+    updated = note.timestamps.updated.isoformat() if note.timestamps.updated else None
+    return created, updated
 
 
-def fetch_unsynced_notes(label_name: str | None = None) -> list[dict[str, Any]]:
+def list_notes(label_name: str | None = None) -> list[dict[str, Any]]:
     """
-    Return Keep notes with the given label that haven't been synced yet.
+    Return all non-trashed, non-archived Keep notes for the configured label.
 
     Each item:
         { keep_id, title, text, created_at, updated_at }
     """
-    label_name = label_name or os.environ.get("KEEP_LABEL", "book-note")
+    label_name = label_name or config.KEEP_LABEL
     keep = connect()
 
     # Find the label object
@@ -141,36 +136,30 @@ def fetch_unsynced_notes(label_name: str | None = None) -> list[dict[str, Any]]:
     if not all_notes:
         return []
 
-    # Filter out already-synced ones
-    all_ids = [str(note.id) for note in all_notes]
-    synced_ids = _already_synced(all_ids)
-
     results = []
     for note in all_notes:
         nid = str(note.id)
-        if nid in synced_ids:
-            continue
 
         text = _extract_text(note)
         if not text:
             continue  # Skip empty notes
 
+        created_at, updated_at = _timestamps(note)
         results.append({
             "keep_id": nid,
             "title": note.title or "",
             "text": text,
-            "created_at": note.timestamps.created.isoformat() if note.timestamps.created else None,
-            "updated_at": note.timestamps.updated.isoformat() if note.timestamps.updated else None,
+            "created_at": created_at,
+            "updated_at": updated_at,
         })
 
     return results
 
 
-# ── Mark synced ──────────────────────────────────────────────────────────────
+def fetch_unsynced_notes(label_name: str | None = None) -> list[dict[str, Any]]:
+    """Backward-compatible helper used by older callers."""
+    from storage import db
 
-def mark_synced(keep_note_id: str, note_id: str) -> None:
-    """Record that a Keep note has been processed and stored."""
-    db_client().table("keep_synced").upsert(
-        {"keep_note_id": keep_note_id, "note_id": note_id},
-        on_conflict="keep_note_id",
-    ).execute()
+    notes = list_notes(label_name)
+    existing = db.list_keep_syncs([note["keep_id"] for note in notes])
+    return [note for note in notes if note["keep_id"] not in existing]

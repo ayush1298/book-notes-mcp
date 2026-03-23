@@ -12,7 +12,7 @@ It is built for one practical problem: reading produces a lot of fragments, but 
 - Stores both the raw capture and the processed note
 - Builds embeddings for retrieval across your reading history
 - Exposes the knowledge base through MCP tools, a web API, and a browser UI
-- Syncs notes from a dedicated Google Keep account using the official Keep API
+- Syncs notes from Google Keep using `gkeepapi`
 
 ## Core tools
 
@@ -24,7 +24,7 @@ It is built for one practical problem: reading produces a lot of fragments, but 
 | `get_note` | Fetch one note by id |
 | `list_notes` | Browse recent notes, optionally by tag |
 | `link_notes` | Find related notes based on shared concepts |
-| `sync_from_keep_api` | Poll the configured Google Keep account and import or update notes |
+| `sync_from_keep` | Poll the configured Google Keep label and import or update notes |
 
 ## How it is meant to be used
 
@@ -41,7 +41,7 @@ It is built for one practical problem: reading produces a lot of fragments, but 
 - Supabase for note storage and vector search
 - LiteLLM for model routing
 - MCP server for Claude Desktop / Cursor workflows
-- Google Keep API for scheduled Keep sync
+- `gkeepapi` for scheduled Google Keep sync
 
 ## Setup
 
@@ -76,9 +76,10 @@ VECTOR_DIM=768
 Optional Keep sync configuration:
 
 ```bash
-KEEP_CLIENT_ID=<oauth client id>
-KEEP_CLIENT_SECRET=<oauth client secret>
-KEEP_TOKEN_FILE=.keep_oauth_token.json
+GOOGLE_EMAIL=<your google account email>
+GOOGLE_APP_PASSWORD=<16-character app password>
+KEEP_LABEL=book-note
+KEEP_TOKEN_FILE=.keep_token
 KEEP_SYNC_INTERVAL_MINUTES=5
 ```
 
@@ -125,20 +126,16 @@ Open:
 
 ## Google Keep sync
 
-The intended setup is a dedicated Google account used only for capture. The server polls that account and imports every non-trashed note it finds.
+The intended setup is a dedicated Google account used only for capture. The server polls that account through `gkeepapi` and imports notes matching the configured Keep label.
 
-### One-time OAuth bootstrap
+### Authentication
 
-1. Enable the Google Keep API in Google Cloud
-2. Create an OAuth client for a desktop app
-3. Put `KEEP_CLIENT_ID` and `KEEP_CLIENT_SECRET` in `.env`
-4. Run:
+1. Turn on 2-step verification for the Google account
+2. Create a Google App Password
+3. Put `GOOGLE_EMAIL` and `GOOGLE_APP_PASSWORD` in `.env`
+4. Optionally set `KEEP_LABEL` if you do not want to use the default `book-note`
 
-```bash
-book-notes-keep-auth
-```
-
-That writes the token file configured by `KEEP_TOKEN_FILE`.
+The first successful sync caches a Keep token in `KEEP_TOKEN_FILE`.
 
 ### Run one sync pass
 
@@ -148,7 +145,7 @@ book-notes-keep-sync
 
 The sync behavior is:
 
-- new Keep note -> create a new note in the library
+- new Keep note with the configured label -> create a new note in the library
 - changed Keep note -> update the existing mapped note and refresh its embedding
 - unchanged Keep note -> skip
 - deleted or missing Keep note -> no automatic deletion in the app
