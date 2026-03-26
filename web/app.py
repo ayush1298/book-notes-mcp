@@ -28,7 +28,7 @@ from pathlib import Path
 # Ensure project root is on path so pipeline modules resolve
 sys.path.insert(0, str(Path(__file__).parent.parent))
 
-from fastapi import FastAPI, HTTPException, BackgroundTasks
+from fastapi import FastAPI, HTTPException, BackgroundTasks, UploadFile, Form, File
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import FileResponse
 from fastapi.staticfiles import StaticFiles
@@ -89,6 +89,36 @@ def process_note(req: ProcessRequest):
             book_title=req.book_title,
         )
     except Exception as e:
+        raise HTTPException(status_code=500, detail=str(e))
+
+
+@app.post("/api/process_media")
+async def process_media(
+    file: UploadFile = File(...),
+    text: str = Form(""),
+    source: str = Form("manual")
+):
+    """Fallback endpoint for handling direct multimodal uploads (images/audio) from the PWA."""
+    try:
+        from processing.media import extract_text_from_media
+        
+        media_bytes = await file.read()
+        extracted_text = extract_text_from_media(media_bytes, file.content_type)
+        
+        # Combine any typed notes with the extracted media text
+        final_text = text.strip()
+        if final_text:
+            final_text += f"\n\n--- Extracted from {file.filename} ---\n\n{extracted_text}"
+        else:
+            final_text = extracted_text
+            
+        return ingest_note(
+            raw_text=final_text,
+            source=source,
+        )
+    except Exception as e:
+        import traceback
+        traceback.print_exc()
         raise HTTPException(status_code=500, detail=str(e))
 
 

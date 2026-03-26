@@ -2,8 +2,11 @@
 <html lang="en">
 <head>
   <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover, maximum-scale=1.0, user-scalable=0" />
   <title>Book Notes</title>
+  <link rel="manifest" href="/static/manifest.json" />
+  <meta name="theme-color" content="#f4efe6" />
+  <link rel="apple-touch-icon" href="/static/icon-192.png" />
   <link rel="preconnect" href="https://fonts.googleapis.com" />
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
   <link href="https://fonts.googleapis.com/css2?family=Manrope:wght@400;500;600;700;800&family=Newsreader:opsz,wght@6..72,500;6..72,700&display=swap" rel="stylesheet" />
@@ -1044,16 +1047,24 @@
                 <div class="source-switch">
                   <button class="source-chip active" data-source="manual" onclick="selectSource(this)">
                     <strong>Manual</strong>
-                    <span>Typed or pasted directly here</span>
+                    <span>Typed or pasted</span>
                   </button>
                   <button class="source-chip" data-source="keep" onclick="selectSource(this)">
                     <strong>Google Keep</strong>
-                    <span>Imported or copied from your inbox</span>
+                    <span>From your inbox</span>
                   </button>
                 </div>
 
-                <label for="noteText">Raw note text</label>
-                <textarea id="noteText" placeholder="Paste the note exactly as you captured it. Messy input is fine. OCR fragments, transcript errors, and half-finished phrasing are expected here."></textarea>
+                <div style="display:flex; gap: 8px; margin-bottom: 12px;">
+                  <button class="btn btn-secondary" style="flex: 1; padding: 12px; font-size: 0.9rem;" onclick="document.getElementById('cameraInput').click()">📷 Take Photo</button>
+                  <button class="btn btn-secondary" style="flex: 1; padding: 12px; font-size: 0.9rem;" id="recordBtn" onclick="toggleRecording()">🎙️ Record</button>
+                  <input type="file" id="cameraInput" accept="image/*" capture="environment" style="display: none;" onchange="handleImage(this)" />
+                </div>
+                
+                <div id="mediaPreview" style="margin-bottom: 12px; font-size: 0.85rem; color: var(--teal); font-weight: 800; display: none;"></div>
+
+                <label for="noteText">Raw note text (Optional if media attached)</label>
+                <textarea id="noteText" placeholder="Paste the note exactly as you captured it, or use the Camera/Mic above."></textarea>
 
                 <div style="margin-top:16px;">
                   <button class="btn btn-primary" id="processBtn" onclick="processNote()">Process into shelf</button>
@@ -1244,19 +1255,83 @@
       }
     }
 
-    async function processNote() {
-      const text = document.getElementById("noteText").value.trim();
-      if (!text) return;
+    if ('serviceWorker' in navigator) {
+      navigator.serviceWorker.register('/static/sw.js').catch(err => console.log('SW registration failed:', err));
+    }
 
-      setBtn("processBtn", true, "Processing");
-      document.getElementById("processResult").innerHTML = renderStatus("loading", "Running summarization, extraction, and storage.");
+    let capturedMedia = null; // Can hold a File or Blob
+    let mediaRecorder = null;
+    let audioChunks = [];
+
+    function handleImage(input) {
+      if (input.files && input.files[0]) {
+        capturedMedia = input.files[0];
+        document.getElementById("mediaPreview").style.display = "block";
+        document.getElementById("mediaPreview").textContent = `📎 Photo attached: ${capturedMedia.name}`;
+      }
+    }
+
+    async function toggleRecording() {
+      const btn = document.getElementById("recordBtn");
+      
+      if (mediaRecorder && mediaRecorder.state === "recording") {
+        mediaRecorder.stop();
+        btn.textContent = "🎙️ Record";
+        btn.style.color = "inherit";
+        return;
+      }
 
       try {
-        const response = await fetch(`${API}/api/process`, {
-          method: "POST",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({ raw_text: text, source: currentSource })
-        });
+        const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
+        mediaRecorder = new MediaRecorder(stream);
+        audioChunks = [];
+
+        mediaRecorder.ondataavailable = e => {
+          if (e.data.size > 0) audioChunks.push(e.data);
+        };
+
+        mediaRecorder.onstop = () => {
+          capturedMedia = new Blob(audioChunks, { type: 'audio/webm' });
+          document.getElementById("mediaPreview").style.display = "block";
+          document.getElementById("mediaPreview").textContent = `🎤 Audio attached (${(capturedMedia.size / 1024).toFixed(1)} KB)`;
+          stream.getTracks().forEach(track => track.stop());
+        };
+
+        mediaRecorder.start();
+        btn.textContent = "🛑 Stop";
+        btn.style.color = "var(--error)";
+      } catch (err) {
+        alert("Microphone access denied or unavailable.");
+      }
+    }
+
+    async function processNote() {
+      const text = document.getElementById("noteText").value.trim();
+      if (!text && !capturedMedia) return;
+
+      setBtn("processBtn", true, "Processing media...");
+      document.getElementById("processResult").innerHTML = renderStatus("loading", "Extracting OCR/speech, generating summary, and storing.");
+
+      try {
+        let response;
+        if (capturedMedia) {
+          const formData = new FormData();
+          formData.append("file", capturedMedia, capturedMedia.type.includes('audio') ? 'recording.webm' : 'photo.jpg');
+          if (text) formData.append("text", text);
+          formData.append("source", currentSource);
+
+          response = await fetch(`${API}/api/process_media`, {
+            method: "POST",
+            body: formData
+          });
+        } else {
+          response = await fetch(`${API}/api/process`, {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({ raw_text: text, source: currentSource })
+          });
+        }
+
         const data = await response.json();
         if (!response.ok) throw new Error(data.detail || "Unable to process note.");
 
@@ -1275,6 +1350,12 @@
           </div>
         `;
         document.getElementById("noteText").value = "";
+        capturedMedia = null;
+        const mp = document.getElementById("mediaPreview");
+        if(mp) mp.style.display = "none";
+        const ci = document.getElementById("cameraInput");
+        if(ci) ci.value = "";
+
         await refreshMetrics();
       } catch (error) {
         document.getElementById("processResult").innerHTML = renderStatus("error", error.message);
