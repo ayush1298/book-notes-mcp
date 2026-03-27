@@ -58,6 +58,8 @@ class ProcessRequest(BaseModel):
     raw_text: str
     source: str = "manual"
     book_title: str | None = None
+    chapter: str | None = None
+    title: str | None = None
 
 class AskRequest(BaseModel):
     question: str
@@ -87,6 +89,8 @@ def process_note(req: ProcessRequest):
             raw_text=req.raw_text,
             source=req.source,
             book_title=req.book_title,
+            chapter=req.chapter,
+            title=req.title,
         )
     except Exception as e:
         raise HTTPException(status_code=500, detail=str(e))
@@ -96,7 +100,10 @@ def process_note(req: ProcessRequest):
 async def process_media(
     file: UploadFile = File(...),
     text: str = Form(""),
-    source: str = Form("manual")
+    source: str = Form("manual"),
+    book_title: str = Form(None),
+    chapter: str = Form(None),
+    title: str = Form(None)
 ):
     """Fallback endpoint for handling direct multimodal uploads (images/audio) from the PWA."""
     try:
@@ -108,13 +115,16 @@ async def process_media(
         # Combine any typed notes with the extracted media text
         final_text = text.strip()
         if final_text:
-            final_text += f"\n\n--- Extracted from {file.filename} ---\n\n{extracted_text}"
+            final_text += f"\n\n--- Extracted from media ---\n\n{extracted_text}"
         else:
             final_text = extracted_text
             
         return ingest_note(
             raw_text=final_text,
             source=source,
+            book_title=book_title,
+            chapter=chapter,
+            title=title,
         )
     except Exception as e:
         import traceback
@@ -166,6 +176,58 @@ def get_note(note_id: str):
         return note
     except HTTPException:
         raise
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=str(e))
+
+
+class EditRequest(BaseModel):
+    book_title: str | None = None
+    chapter: str | None = None
+    title: str | None = None
+    summary: str | None = None
+    ideas: list[str] | None = None
+    tags: list[str] | None = None
+    actions: list[str] | None = None
+
+@app.put("/api/notes/{note_id}")
+def edit_note(note_id: str, req: EditRequest):
+    """Update textual fields of a note."""
+    from storage.db import update_note, get_note as _get
+    try:
+        note = _get(note_id)
+        if not note:
+            raise HTTPException(status_code=404, detail="Note not found")
+            
+        update_note(
+            note_id,
+            book_title=req.book_title,
+            chapter=req.chapter,
+            title=req.title,
+            summary=req.summary,
+            ideas=req.ideas,
+            tags=req.tags,
+            actions=req.actions
+        )
+        return {"status": "success", "note_id": note_id}
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=str(e))
+
+@app.delete("/api/notes/{note_id}")
+def delete_note(note_id: str):
+    """Delete a note."""
+    from storage.db import delete_note as _del
+    try:
+        _del(note_id)
+        return {"status": "deleted"}
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=str(e))
+
+@app.get("/api/folders")
+def list_folders():
+    """Retrieve unique book_title and chapter combinations."""
+    from storage.db import list_folders as _lf
+    try:
+        return {"folders": _lf()}
     except Exception as e:
         raise HTTPException(status_code=500, detail=str(e))
 

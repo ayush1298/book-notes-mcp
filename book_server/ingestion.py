@@ -12,6 +12,8 @@ def ingest_note(
     raw_text: str,
     source: str,
     book_title: str | None = None,
+    chapter: str | None = None,
+    title: str | None = None,
     existing_note_id: str | None = None,
 ) -> dict[str, Any]:
     """
@@ -22,6 +24,10 @@ def ingest_note(
     processed = summarize_note(raw_text)
     if book_title:
         processed["book_title"] = book_title
+    if chapter:
+        processed["chapter"] = chapter
+    if title:
+        processed["title"] = title
 
     if existing_note_id:
         existing_note = db.get_note(existing_note_id)
@@ -33,6 +39,8 @@ def ingest_note(
             raw_text=raw_text,
             source=source,
             book_title=processed.get("book_title"),
+            chapter=processed.get("chapter"),
+            title=processed.get("title"),
             summary=processed.get("summary"),
             ideas=processed.get("ideas"),
             tags=processed.get("tags"),
@@ -45,6 +53,8 @@ def ingest_note(
             raw_text=raw_text,
             source=source,
             book_title=processed.get("book_title"),
+            chapter=processed.get("chapter"),
+            title=processed.get("title"),
             summary=processed.get("summary"),
             ideas=processed.get("ideas"),
             tags=processed.get("tags"),
@@ -66,6 +76,8 @@ def ingest_note(
     return {
         "note_id": note_id,
         "book_title": processed.get("book_title"),
+        "chapter": processed.get("chapter"),
+        "title": processed.get("title"),
         "summary": processed.get("summary"),
         "ideas": processed.get("ideas"),
         "tags": processed.get("tags"),

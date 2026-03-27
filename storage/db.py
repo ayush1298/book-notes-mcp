@@ -27,6 +27,8 @@ def insert_note(
     raw_text: str,
     source: str = "manual",
     book_title: str | None = None,
+    chapter: str | None = None,
+    title: str | None = None,
     summary: str | None = None,
     ideas: list[str] | None = None,
     tags: list[str] | None = None,
@@ -37,6 +39,8 @@ def insert_note(
         "raw_text": raw_text,
         "source": source,
         "book_title": book_title,
+        "chapter": chapter,
+        "title": title,
         "summary": summary,
         "ideas": ideas or [],
         "tags": tags or [],
@@ -61,6 +65,11 @@ def delete_embeddings(note_id: str) -> None:
 def update_note(note_id: str, **fields: Any) -> None:
     """Patch arbitrary fields on an existing note."""
     _client().table("notes").update(fields).eq("id", note_id).execute()
+
+
+def delete_note(note_id: str) -> None:
+    """Deletes a note entirely (cascades to embeddings in DB)."""
+    _client().table("notes").delete().eq("id", note_id).execute()
 
 
 def get_keep_sync(keep_note_id: str) -> dict[str, Any] | None:
@@ -121,10 +130,18 @@ def list_notes(
     offset: int = 0,
     tag: str | None = None,
 ) -> list[dict[str, Any]]:
-    q = _client().table("notes").select("id,book_title,summary,tags,created_at")
+    q = _client().table("notes").select("id,source,book_title,chapter,title,summary,tags,created_at")
     if tag:
         q = q.contains("tags", [tag])
     return q.order("created_at", desc=True).range(offset, offset + limit - 1).execute().data
+
+def list_folders() -> list[dict[str, Any]]:
+    """Get all unique book_titles and their chapters."""
+    # Since PostgREST doesn't inherently support SELECT DISTINCT easily on multiple columns without RPC,
+    # we just fetch the columns and deduplicate in Python (assuming notes count < 50k is fast enough to transfer).
+    # A cleaner way is an RPC, but fetching 500 rows is instant.
+    res = _client().table("notes").select("book_title,chapter").execute()
+    return res.data or []
 
 
 def link_notes(note_id: str, limit: int = 5) -> list[dict[str, Any]]:

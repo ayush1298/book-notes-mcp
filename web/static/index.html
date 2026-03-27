@@ -5,1269 +5,740 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover, maximum-scale=1.0, user-scalable=0" />
   <title>Book Notes</title>
   <link rel="manifest" href="/static/manifest.json" />
-  <meta name="theme-color" content="#f4efe6" />
+  <meta name="theme-color" content="#0f1115" />
   <link rel="apple-touch-icon" href="/static/icon-192.png" />
+  
   <link rel="preconnect" href="https://fonts.googleapis.com" />
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
-  <link href="https://fonts.googleapis.com/css2?family=Manrope:wght@400;500;600;700;800&family=Newsreader:opsz,wght@6..72,500;6..72,700&display=swap" rel="stylesheet" />
+  <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600;700;800&display=swap" rel="stylesheet" />
+  
   <style>
     *, *::before, *::after { box-sizing: border-box; }
 
     :root {
-      --paper: #f4efe6;
-      --paper-strong: #fffaf1;
-      --ink: #18201d;
-      --ink-soft: #4f5a56;
-      --line: rgba(24, 32, 29, 0.12);
-      --line-strong: rgba(24, 32, 29, 0.22);
-      --accent: #9b4d2f;
-      --accent-dark: #71361f;
-      --accent-soft: rgba(155, 77, 47, 0.1);
-      --teal: #24584f;
-      --teal-soft: rgba(36, 88, 79, 0.1);
-      --gold: #c28d2f;
-      --success: #1f7a62;
-      --error: #ae4332;
-      --surface: rgba(255, 250, 241, 0.84);
-      --surface-strong: rgba(255, 250, 241, 0.96);
-      --shadow: 0 20px 50px rgba(43, 31, 20, 0.08);
-      --shadow-soft: 0 8px 24px rgba(43, 31, 20, 0.06);
-      --radius-xl: 28px;
-      --radius-lg: 22px;
+      --bg: #09090b;
+      --bg-soft: #18181b;
+      --bg-surface: rgba(24, 24, 27, 0.7);
+      
+      --ink: #f8fafc;
+      --ink-soft: #94a3b8;
+      
+      --line: rgba(255, 255, 255, 0.1);
+      
+      --primary: #6366f1;
+      --primary-hover: #4f46e5;
+      --primary-soft: rgba(99, 102, 241, 0.15);
+      
+      --success: #10b981;
+      --error: #ef4444;
+      
+      --radius-xl: 32px;
+      --radius-lg: 24px;
       --radius: 16px;
-      --radius-sm: 12px;
-      --nav-height: 78px;
+      --radius-sm: 10px;
+      
+      --nav-height: 80px;
     }
 
     html, body {
       margin: 0;
       min-height: 100%;
-      background:
-        radial-gradient(circle at top left, rgba(194, 141, 47, 0.14), transparent 28%),
-        radial-gradient(circle at 85% 12%, rgba(36, 88, 79, 0.12), transparent 26%),
-        linear-gradient(180deg, #efe6d6 0%, #f4efe6 28%, #efe8dc 100%);
+      background-color: var(--bg);
       color: var(--ink);
-      font-family: "Manrope", system-ui, sans-serif;
+      font-family: "Outfit", system-ui, sans-serif;
       -webkit-font-smoothing: antialiased;
+      overflow-x: hidden;
     }
 
-    body::before {
+    /* Ambient animated background glows */
+    body::before, body::after {
       content: "";
       position: fixed;
-      inset: 0;
-      background-image:
-        linear-gradient(rgba(24, 32, 29, 0.025) 1px, transparent 1px),
-        linear-gradient(90deg, rgba(24, 32, 29, 0.025) 1px, transparent 1px);
-      background-size: 20px 20px;
-      mask-image: radial-gradient(circle at center, black 40%, transparent 92%);
-      pointer-events: none;
+      width: 600px;
+      height: 600px;
+      border-radius: 50%;
+      filter: blur(120px);
       z-index: 0;
+      opacity: 0.15;
+      pointer-events: none;
+    }
+    body::before {
+      top: -100px;
+      left: -100px;
+      background: #8b5cf6;
+    }
+    body::after {
+      bottom: -100px;
+      right: -100px;
+      background: #3b82f6;
     }
 
     #app {
       position: relative;
       z-index: 1;
-      width: min(1180px, calc(100% - 28px));
-      margin: 24px auto 0;
-      padding-bottom: calc(var(--nav-height) + 28px);
-    }
-
-    .shell {
-      border: 1px solid rgba(24, 32, 29, 0.08);
-      border-radius: 32px;
-      background: linear-gradient(180deg, rgba(255, 250, 241, 0.94), rgba(250, 244, 233, 0.9));
-      box-shadow: var(--shadow);
-      overflow: hidden;
-      backdrop-filter: blur(16px);
+      width: min(800px, 100%);
+      margin: 0 auto;
+      min-height: 100vh;
+      display: flex;
+      flex-direction: column;
+      padding-bottom: calc(var(--nav-height) + 20px);
     }
 
     .topbar {
+      padding: 24px 20px 16px;
       display: flex;
       align-items: center;
-      gap: 16px;
-      padding: 18px 22px;
-      border-bottom: 1px solid rgba(24, 32, 29, 0.08);
-      background: rgba(255, 250, 241, 0.78);
-      backdrop-filter: blur(12px);
+      justify-content: space-between;
       position: sticky;
       top: 0;
-      z-index: 5;
+      background: rgba(9, 9, 11, 0.85);
+      backdrop-filter: blur(20px);
+      -webkit-backdrop-filter: blur(20px);
+      z-index: 20;
+      border-bottom: 1px solid var(--line);
     }
 
-    .brand-mark {
-      width: 48px;
-      height: 48px;
-      border-radius: 18px;
-      background:
-        linear-gradient(135deg, rgba(36, 88, 79, 0.95), rgba(155, 77, 47, 0.92));
-      display: grid;
-      place-items: center;
-      color: #fffaf1;
-      font-size: 22px;
-      box-shadow: 0 10px 24px rgba(36, 88, 79, 0.18);
-      flex-shrink: 0;
-    }
-
-    .brand-copy { min-width: 0; }
-    .eyebrow {
-      font-size: 11px;
-      text-transform: uppercase;
-      letter-spacing: 0.18em;
-      color: var(--ink-soft);
-      margin-bottom: 4px;
-    }
-    h1 {
-      margin: 0;
-      font-size: clamp(1.35rem, 2vw, 1.7rem);
-      line-height: 1;
-      font-weight: 800;
-      letter-spacing: -0.04em;
-    }
-    .brand-note {
-      margin: 4px 0 0;
-      font-size: 0.95rem;
-      color: var(--ink-soft);
-    }
-
-    .topbar-actions {
-      margin-left: auto;
+    .brand {
       display: flex;
       align-items: center;
-      gap: 10px;
-      flex-wrap: wrap;
-      justify-content: flex-end;
-    }
-
-    .status-pill,
-    .mini-pill {
-      border-radius: 999px;
-      padding: 10px 14px;
-      font-size: 0.78rem;
-      font-weight: 700;
-      letter-spacing: 0.02em;
-      border: 1px solid transparent;
-      background: var(--surface);
-      color: var(--ink);
-      display: inline-flex;
-      align-items: center;
-      gap: 8px;
-      white-space: nowrap;
-    }
-
-    .status-pill::before {
-      content: "";
-      width: 8px;
-      height: 8px;
-      border-radius: 50%;
-      background: currentColor;
-    }
-
-    .status-pill.live {
-      background: rgba(31, 122, 98, 0.11);
-      border-color: rgba(31, 122, 98, 0.22);
-      color: var(--success);
-    }
-
-    .status-pill.offline {
-      background: rgba(174, 67, 50, 0.1);
-      border-color: rgba(174, 67, 50, 0.18);
-      color: var(--error);
-    }
-
-    .mini-pill {
-      background: rgba(194, 141, 47, 0.12);
-      border-color: rgba(194, 141, 47, 0.2);
-      color: var(--accent-dark);
-    }
-
-    .hero {
-      display: grid;
-      grid-template-columns: minmax(0, 1.35fr) minmax(300px, 0.9fr);
-      gap: 20px;
-      padding: 22px;
-      border-bottom: 1px solid rgba(24, 32, 29, 0.08);
-    }
-
-    .hero-panel,
-    .hero-aside,
-    .panel,
-    .result-block,
-    .note-card {
-      border: 1px solid rgba(24, 32, 29, 0.08);
-      border-radius: var(--radius-xl);
-      background: linear-gradient(180deg, rgba(255, 250, 241, 0.9), rgba(255, 251, 246, 0.72));
-      box-shadow: var(--shadow-soft);
-    }
-
-    .hero-panel {
-      padding: 26px;
-      position: relative;
-      overflow: hidden;
-    }
-
-    .hero-panel::after {
-      content: "";
-      position: absolute;
-      right: -70px;
-      bottom: -80px;
-      width: 240px;
-      height: 240px;
-      border-radius: 50%;
-      background: radial-gradient(circle, rgba(36, 88, 79, 0.12) 0%, transparent 70%);
-      pointer-events: none;
-    }
-
-    .hero-title {
-      max-width: 12ch;
-      margin: 0 0 12px;
-      font-family: "Newsreader", serif;
-      font-size: clamp(2.4rem, 5vw, 4.5rem);
-      line-height: 0.95;
-      font-weight: 700;
-      letter-spacing: -0.05em;
-    }
-
-    .hero-copy {
-      max-width: 56ch;
-      margin: 0;
-      font-size: 1.03rem;
-      line-height: 1.75;
-      color: var(--ink-soft);
-    }
-
-    .hero-metrics {
-      display: grid;
-      grid-template-columns: repeat(3, minmax(0, 1fr));
-      gap: 12px;
-      margin-top: 24px;
-    }
-
-    .metric {
-      padding: 16px 18px;
-      border-radius: 18px;
-      background: rgba(255, 255, 255, 0.42);
-      border: 1px solid rgba(24, 32, 29, 0.08);
-    }
-
-    .metric-label {
-      font-size: 0.78rem;
-      text-transform: uppercase;
-      letter-spacing: 0.12em;
-      color: var(--ink-soft);
-      margin-bottom: 8px;
-    }
-
-    .metric-value {
-      font-size: 1.65rem;
-      font-weight: 800;
-      letter-spacing: -0.04em;
-    }
-
-    .hero-aside {
-      padding: 24px;
-      background:
-        linear-gradient(180deg, rgba(36, 88, 79, 0.06), rgba(255, 250, 241, 0.84)),
-        linear-gradient(180deg, rgba(255, 255, 255, 0.82), rgba(255, 255, 255, 0.52));
-    }
-
-    .aside-label {
-      font-size: 0.78rem;
-      text-transform: uppercase;
-      letter-spacing: 0.14em;
-      color: var(--teal);
-      margin-bottom: 12px;
-      font-weight: 800;
-    }
-
-    .flow-title {
-      margin: 0 0 12px;
-      font-family: "Newsreader", serif;
-      font-size: 2rem;
-      letter-spacing: -0.04em;
-    }
-
-    .flow-copy {
-      margin: 0 0 18px;
-      font-size: 0.97rem;
-      line-height: 1.7;
-      color: var(--ink-soft);
-    }
-
-    .flow-list {
-      display: grid;
       gap: 12px;
     }
-
-    .flow-item {
-      display: grid;
-      grid-template-columns: 40px 1fr;
-      gap: 12px;
-      align-items: start;
-      padding: 12px 0;
-      border-top: 1px solid rgba(24, 32, 29, 0.08);
-    }
-
-    .flow-item:first-child { border-top: 0; padding-top: 0; }
-
-    .flow-step {
-      width: 40px;
-      height: 40px;
+    
+    .brand-icon {
+      width: 42px;
+      height: 42px;
       border-radius: 14px;
+      background: linear-gradient(135deg, #6366f1, #a855f7);
       display: grid;
       place-items: center;
-      background: rgba(155, 77, 47, 0.12);
-      color: var(--accent-dark);
-      font-weight: 800;
+      font-size: 20px;
+      box-shadow: 0 8px 24px rgba(99, 102, 241, 0.3);
     }
 
-    .workspace {
-      display: grid;
-      grid-template-columns: 245px minmax(0, 1fr);
-      gap: 22px;
-      padding: 22px;
-    }
-
-    .rail {
-      display: grid;
-      gap: 12px;
-      align-content: start;
-    }
-
-    .rail-card {
-      border-radius: var(--radius-lg);
-      border: 1px solid rgba(24, 32, 29, 0.08);
-      background: rgba(255, 250, 241, 0.74);
-      padding: 16px;
-    }
-
-    .rail-title {
-      margin: 0 0 8px;
-      font-size: 0.95rem;
-      font-weight: 800;
-      letter-spacing: -0.02em;
-    }
-
-    .rail-copy {
+    .brand h1 {
       margin: 0;
-      font-size: 0.9rem;
-      line-height: 1.6;
-      color: var(--ink-soft);
-    }
-
-    .tab-list {
-      display: grid;
-      gap: 8px;
-      margin-top: 12px;
-    }
-
-    .tab-button {
-      appearance: none;
-      border: 1px solid rgba(24, 32, 29, 0.08);
-      background: rgba(255, 255, 255, 0.44);
-      border-radius: 16px;
-      padding: 14px 16px;
-      text-align: left;
-      cursor: pointer;
-      font: inherit;
-      color: var(--ink);
-      transition: transform 180ms ease, border-color 180ms ease, background 180ms ease;
-    }
-
-    .tab-button:hover {
-      transform: translateY(-1px);
-      border-color: rgba(24, 32, 29, 0.18);
-    }
-
-    .tab-button.active {
-      background: linear-gradient(135deg, rgba(36, 88, 79, 0.13), rgba(155, 77, 47, 0.1));
-      border-color: rgba(36, 88, 79, 0.24);
-      box-shadow: inset 0 0 0 1px rgba(36, 88, 79, 0.08);
-    }
-
-    .tab-kicker {
-      display: block;
-      margin-bottom: 4px;
-      font-size: 0.73rem;
-      text-transform: uppercase;
-      letter-spacing: 0.14em;
-      color: var(--ink-soft);
-      font-weight: 800;
-    }
-
-    .tab-name {
-      font-size: 1rem;
-      font-weight: 800;
+      font-size: 1.25rem;
+      font-weight: 700;
       letter-spacing: -0.02em;
     }
-
-    .tab-description {
-      display: block;
-      margin-top: 4px;
-      font-size: 0.86rem;
-      line-height: 1.5;
+    
+    .brand p {
+      margin: 2px 0 0;
+      font-size: 0.8rem;
       color: var(--ink-soft);
     }
 
-    .panel-stack {
-      display: grid;
-      gap: 16px;
-      min-width: 0;
+    .server-status {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      font-size: 0.8rem;
+      font-weight: 600;
+      padding: 8px 12px;
+      border-radius: 999px;
+      background: rgba(16, 185, 129, 0.1);
+      color: var(--success);
+      border: 1px solid rgba(16, 185, 129, 0.2);
+    }
+    .server-status.offline {
+      background: rgba(239, 68, 68, 0.1);
+      color: var(--error);
+      border-color: rgba(239, 68, 68, 0.2);
     }
 
+    /* Panels */
     .panel {
       display: none;
-      padding: 22px;
-      animation: fadeUp 220ms ease;
+      padding: 24px 20px;
+      animation: fadeUp 0.3s cubic-bezier(0.16, 1, 0.3, 1);
     }
-
     .panel.active { display: block; }
 
     @keyframes fadeUp {
-      from { opacity: 0; transform: translateY(10px); }
+      from { opacity: 0; transform: translateY(15px); }
       to { opacity: 1; transform: translateY(0); }
     }
 
     .panel-header {
-      display: flex;
-      align-items: start;
-      justify-content: space-between;
-      gap: 16px;
-      margin-bottom: 18px;
+      margin-bottom: 24px;
     }
-
     .panel-header h2 {
-      margin: 0 0 6px;
-      font-family: "Newsreader", serif;
+      margin: 0 0 8px;
       font-size: 2rem;
-      letter-spacing: -0.04em;
+      font-weight: 700;
+      letter-spacing: -0.03em;
     }
-
     .panel-header p {
       margin: 0;
       color: var(--ink-soft);
-      line-height: 1.7;
-      max-width: 58ch;
-    }
-
-    .panel-badge {
-      border-radius: 999px;
-      padding: 10px 12px;
-      background: var(--accent-soft);
-      color: var(--accent-dark);
-      font-size: 0.8rem;
-      font-weight: 800;
-      white-space: nowrap;
-    }
-
-    .grid-two {
-      display: grid;
-      grid-template-columns: minmax(0, 1.2fr) minmax(260px, 0.8fr);
-      gap: 16px;
-    }
-
-    .subpanel {
-      border-radius: 20px;
-      border: 1px solid rgba(24, 32, 29, 0.08);
-      background: rgba(255, 255, 255, 0.46);
-      padding: 18px;
-    }
-
-    .subpanel h3 {
-      margin: 0 0 12px;
       font-size: 0.95rem;
-      font-weight: 800;
-      letter-spacing: -0.02em;
+      line-height: 1.6;
+    }
+
+    /* Form Elements */
+    .card {
+      background: var(--bg-surface);
+      border: 1px solid var(--line);
+      border-radius: var(--radius-lg);
+      padding: 24px;
+      backdrop-filter: blur(12px);
+      -webkit-backdrop-filter: blur(12px);
+      box-shadow: 0 12px 32px rgba(0,0,0,0.2);
+    }
+
+    .input-group {
+      margin-bottom: 20px;
     }
 
     label {
       display: block;
       margin-bottom: 8px;
-      font-size: 0.76rem;
-      text-transform: uppercase;
-      letter-spacing: 0.12em;
+      font-size: 0.85rem;
+      font-weight: 600;
       color: var(--ink-soft);
-      font-weight: 800;
     }
 
-    textarea,
-    input[type="text"] {
+    input[type="text"], textarea {
       width: 100%;
-      border: 1px solid rgba(24, 32, 29, 0.12);
-      border-radius: 16px;
-      background: rgba(255, 250, 241, 0.8);
-      padding: 15px 16px;
+      background: rgba(0,0,0,0.2);
+      border: 1px solid var(--line);
+      border-radius: var(--radius);
+      padding: 16px;
       color: var(--ink);
-      font: inherit;
-      line-height: 1.6;
+      font-family: inherit;
+      font-size: 1rem;
+      transition: all 0.2s ease;
+    }
+    
+    input[type="text"]:focus, textarea:focus {
       outline: none;
-      transition: border-color 180ms ease, box-shadow 180ms ease, background 180ms ease;
+      border-color: var(--primary);
+      box-shadow: 0 0 0 4px var(--primary-soft);
+      background: rgba(0,0,0,0.4);
     }
 
-    textarea { min-height: 220px; resize: vertical; }
-
-    textarea:focus,
-    input[type="text"]:focus {
-      border-color: rgba(36, 88, 79, 0.35);
-      box-shadow: 0 0 0 4px rgba(36, 88, 79, 0.1);
-      background: rgba(255, 250, 241, 0.95);
+    textarea {
+      min-height: 140px;
+      resize: vertical;
     }
 
-    textarea::placeholder,
-    input[type="text"]::placeholder {
-      color: rgba(79, 90, 86, 0.72);
-    }
-
-    .source-switch {
+    .row {
       display: flex;
-      gap: 10px;
-      margin-bottom: 16px;
+      gap: 12px;
+      margin-bottom: 20px;
     }
+    
+    .row > * { flex: 1; }
 
-    .source-chip {
-      flex: 1;
-      border-radius: 16px;
-      border: 1px solid rgba(24, 32, 29, 0.1);
-      background: rgba(255, 255, 255, 0.5);
-      padding: 14px 12px;
-      cursor: pointer;
-      transition: border-color 180ms ease, transform 180ms ease, background 180ms ease;
-      text-align: center;
-    }
-
-    .source-chip.active {
-      border-color: rgba(155, 77, 47, 0.28);
-      background: rgba(155, 77, 47, 0.12);
-      transform: translateY(-1px);
-    }
-
-    .source-chip strong {
-      display: block;
-      font-size: 0.95rem;
-      margin-bottom: 4px;
-    }
-
-    .source-chip span {
-      font-size: 0.82rem;
-      color: var(--ink-soft);
-    }
-
+    /* Buttons */
     .btn {
-      appearance: none;
-      border: 0;
-      border-radius: 16px;
-      padding: 15px 18px;
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      gap: 8px;
+      border: none;
+      border-radius: var(--radius);
+      padding: 16px;
+      font-size: 1rem;
+      font-weight: 600;
+      font-family: inherit;
       cursor: pointer;
-      font: inherit;
-      font-weight: 800;
-      letter-spacing: -0.01em;
-      transition: transform 180ms ease, box-shadow 180ms ease, opacity 180ms ease;
+      transition: all 0.2s ease;
+      white-space: nowrap;
     }
-
-    .btn:hover { transform: translateY(-1px); }
-    .btn:disabled { opacity: 0.65; cursor: not-allowed; transform: none; }
-
+    
     .btn-primary {
-      width: 100%;
-      background: linear-gradient(135deg, var(--teal), #2f6a5f);
-      color: #fffaf1;
-      box-shadow: 0 14px 28px rgba(36, 88, 79, 0.18);
+      background: var(--primary);
+      color: white;
+      box-shadow: 0 8px 16px rgba(99, 102, 241, 0.25);
+    }
+    
+    .btn-primary:hover {
+      background: var(--primary-hover);
+      transform: translateY(-2px);
     }
 
     .btn-secondary {
-      background: rgba(24, 32, 29, 0.06);
+      background: var(--bg-soft);
+      border: 1px solid var(--line);
       color: var(--ink);
-      border: 1px solid rgba(24, 32, 29, 0.08);
     }
-
-    .status {
-      margin-top: 16px;
-      padding: 14px 16px;
-      border-radius: 16px;
-      font-size: 0.94rem;
-      font-weight: 700;
-      border: 1px solid transparent;
-      display: flex;
-      align-items: center;
-      gap: 10px;
+    
+    .btn-secondary:hover {
+      background: rgba(255,255,255,0.05);
+      border-color: rgba(255,255,255,0.2);
     }
-
-    .status.loading {
-      background: rgba(36, 88, 79, 0.09);
-      border-color: rgba(36, 88, 79, 0.15);
-      color: var(--teal);
-    }
-
-    .status.success {
-      background: rgba(31, 122, 98, 0.1);
-      border-color: rgba(31, 122, 98, 0.18);
-      color: var(--success);
-    }
-
-    .status.error {
-      background: rgba(174, 67, 50, 0.1);
-      border-color: rgba(174, 67, 50, 0.16);
+    
+    .btn-danger {
+      background: rgba(239, 68, 68, 0.1);
       color: var(--error);
+      border: 1px solid rgba(239, 68, 68, 0.2);
     }
 
-    .spinner {
-      display: inline-block;
-      width: 16px;
-      height: 16px;
-      border-radius: 50%;
-      border: 2px solid rgba(255, 250, 241, 0.45);
-      border-top-color: currentColor;
-      animation: spin 800ms linear infinite;
+    /* Media Preview */
+    #mediaPreview {
+      margin-bottom: 20px;
+      padding: 12px 16px;
+      border-radius: var(--radius-sm);
+      background: var(--primary-soft);
+      color: #818cf8;
+      font-weight: 600;
+      font-size: 0.9rem;
+      display: none;
+      border: 1px solid rgba(99, 102, 241, 0.2);
     }
 
-    @keyframes spin { to { transform: rotate(360deg); } }
-
-    .result-block {
-      margin-top: 18px;
-      padding: 18px;
-    }
-
-    .result-title,
-    .section-title {
-      margin: 0 0 10px;
-      font-size: 0.8rem;
-      text-transform: uppercase;
-      letter-spacing: 0.14em;
-      color: var(--ink-soft);
-      font-weight: 800;
-    }
-
-    .summary-box {
+    /* Status Notifications */
+    .status-msg {
+      margin-top: 16px;
       padding: 16px;
-      border-radius: 18px;
-      background: rgba(255, 255, 255, 0.52);
-      border: 1px solid rgba(24, 32, 29, 0.08);
-      line-height: 1.75;
-    }
-
-    .chip-row,
-    .tag-filters {
-      display: flex;
-      gap: 8px;
-      flex-wrap: wrap;
-    }
-
-    .tag {
-      border-radius: 999px;
-      border: 1px solid rgba(24, 32, 29, 0.1);
-      background: rgba(255, 255, 255, 0.56);
-      color: var(--ink);
-      font-size: 0.8rem;
-      font-weight: 700;
-      padding: 8px 12px;
-      cursor: pointer;
-    }
-
-    .tag.active {
-      background: rgba(36, 88, 79, 0.12);
-      border-color: rgba(36, 88, 79, 0.24);
-      color: var(--teal);
-    }
-
-    .list-block {
-      display: grid;
-      gap: 10px;
-      margin-top: 12px;
-    }
-
-    .list-item {
-      border-top: 1px solid rgba(24, 32, 29, 0.08);
-      padding-top: 10px;
-      line-height: 1.6;
-    }
-
-    .list-item:first-child {
-      border-top: 0;
-      padding-top: 0;
-    }
-
-    .answer-box {
-      padding: 22px;
-      border-radius: 24px;
-      background:
-        radial-gradient(circle at top right, rgba(194, 141, 47, 0.12), transparent 32%),
-        rgba(255, 250, 241, 0.82);
-      border: 1px solid rgba(24, 32, 29, 0.08);
-      line-height: 1.8;
-    }
-
-    .answer-text {
-      white-space: pre-wrap;
-      color: var(--ink);
-      font-size: 1rem;
-    }
-
-    .source-card {
+      border-radius: var(--radius);
+      font-size: 0.95rem;
       display: flex;
       align-items: center;
       gap: 12px;
-      padding: 14px 16px;
-      border-radius: 18px;
-      background: rgba(255, 255, 255, 0.52);
-      border: 1px solid rgba(24, 32, 29, 0.08);
-      margin-top: 10px;
+      background: var(--bg-soft);
+      border: 1px solid var(--line);
     }
+    .status-msg.loading { border-color: var(--primary); color: #818cf8; }
+    .status-msg.success { border-color: var(--success); color: var(--success); }
+    .status-msg.error { border-color: var(--error); color: var(--error); }
 
-    .source-card-title {
-      font-weight: 800;
-      margin-bottom: 3px;
+    .spinner {
+      width: 18px; height: 18px;
+      border: 2px solid currentColor;
+      border-right-color: transparent;
+      border-radius: 50%;
+      animation: spin 0.8s linear infinite;
     }
+    @keyframes spin { 100% { transform: rotate(360deg); } }
 
-    .sim-badge {
-      margin-left: auto;
-      border-radius: 999px;
-      padding: 6px 10px;
-      font-size: 0.74rem;
-      font-weight: 800;
-      border: 1px solid rgba(24, 32, 29, 0.08);
-      background: rgba(255, 250, 241, 0.72);
-    }
-
-    .note-grid {
-      display: grid;
-      gap: 14px;
-      margin-top: 16px;
-    }
-
-    .note-card {
-      padding: 18px;
-    }
-
-    .note-head {
+    /* Tags */
+    .tags-row {
       display: flex;
-      align-items: start;
-      gap: 14px;
-      margin-bottom: 14px;
+      flex-wrap: wrap;
+      gap: 8px;
+    }
+    .tag {
+      padding: 6px 12px;
+      background: rgba(255,255,255,0.05);
+      border: 1px solid var(--line);
+      border-radius: 999px;
+      font-size: 0.8rem;
+      font-weight: 500;
+      color: var(--ink-soft);
+      cursor: pointer;
+      transition: all 0.2s;
+    }
+    .tag:hover, .tag.active {
+      background: var(--primary-soft);
+      border-color: var(--primary);
+      color: #818cf8;
     }
 
-    .note-mark {
-      width: 44px;
-      height: 44px;
-      border-radius: 16px;
-      display: grid;
-      place-items: center;
-      flex-shrink: 0;
+    /* Folder Hierarchy View (Browse) */
+    .folder-tree {
+      display: flex;
+      flex-direction: column;
+      gap: 16px;
+      margin-top: 24px;
+    }
+    
+    .book-group {
+      background: var(--bg-soft);
+      border: 1px solid var(--line);
+      border-radius: var(--radius-lg);
+      overflow: hidden;
+    }
+    .book-header {
+      padding: 16px 20px;
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      font-weight: 700;
       font-size: 1.1rem;
-      background: rgba(36, 88, 79, 0.1);
-      color: var(--teal);
+      cursor: pointer;
+      background: rgba(255,255,255,0.02);
+      border-bottom: 1px solid transparent;
     }
-
-    .note-meta { min-width: 0; }
-    .note-title {
-      margin: 0 0 4px;
-      font-size: 1.02rem;
-      font-weight: 800;
-      letter-spacing: -0.02em;
+    .book-header i { color: #818cf8; font-style: normal; }
+    
+    .chapter-group {
+      padding: 0 0 0 46px;
+      display: none;
     }
-
-    .note-sub {
+    .book-group.open .chapter-group {
+      display: block;
+      padding-bottom: 16px;
+    }
+    .book-group.open .book-header {
+      border-bottom-color: var(--line);
+    }
+    
+    .chapter-header {
+      padding: 12px 20px 8px 0;
+      font-weight: 600;
+      font-size: 0.95rem;
       color: var(--ink-soft);
-      font-size: 0.86rem;
+    }
+    
+    .note-list {
+      display: grid;
+      gap: 12px;
+      padding-right: 20px;
+      padding-bottom: 12px;
     }
 
-    .note-body {
+    /* Note Cards */
+    .note-card {
+      background: rgba(0,0,0,0.2);
+      border: 1px solid var(--line);
+      border-radius: var(--radius);
+      padding: 16px;
+      cursor: pointer;
+      transition: all 0.2s ease;
+    }
+    .note-card:hover {
+      background: rgba(255,255,255,0.04);
+      border-color: rgba(255,255,255,0.2);
+      transform: translateX(4px);
+    }
+    .note-card h4 {
+      margin: 0 0 6px;
+      font-size: 1.05rem;
+      font-weight: 600;
+    }
+    .note-card p {
+      margin: 0 0 12px;
+      font-size: 0.9rem;
       color: var(--ink-soft);
-      line-height: 1.75;
-    }
-
-    .collapsed {
+      line-height: 1.5;
       display: -webkit-box;
-      -webkit-line-clamp: 3;
-      line-clamp: 3;
+      -webkit-line-clamp: 2;
+      line-clamp: 2;
       -webkit-box-orient: vertical;
       overflow: hidden;
     }
 
-    .utility-row {
-      display: flex;
-      gap: 10px;
-      flex-wrap: wrap;
-      align-items: center;
-      margin-top: 14px;
-    }
-
-    .link-btn,
-    .expand-btn {
-      appearance: none;
-      border: 0;
-      background: rgba(24, 32, 29, 0.06);
-      color: var(--ink);
-      border-radius: 999px;
-      padding: 10px 13px;
-      cursor: pointer;
-      font: inherit;
-      font-size: 0.82rem;
-      font-weight: 800;
-    }
-
-    .link-btn {
-      background: rgba(36, 88, 79, 0.12);
-      color: var(--teal);
-      margin-left: auto;
-    }
-
-    .connections {
-      margin-top: 16px;
-      padding-top: 14px;
-      border-top: 1px solid rgba(24, 32, 29, 0.08);
-      display: none;
-    }
-
-    .connection-card {
-      padding: 12px 14px;
-      border-radius: 16px;
-      border: 1px solid rgba(24, 32, 29, 0.08);
-      background: rgba(255, 255, 255, 0.48);
-      margin-top: 10px;
-      cursor: pointer;
-    }
-
-    .empty {
-      padding: 42px 20px;
-      border-radius: 24px;
-      text-align: center;
-      color: var(--ink-soft);
-      border: 1px dashed rgba(24, 32, 29, 0.16);
-      background: rgba(255, 255, 255, 0.36);
-      line-height: 1.8;
-    }
-
-    .mobile-dock {
+    /* Full-Screen Reading Modal */
+    .modal-overlay {
       position: fixed;
+      inset: 0;
+      background: rgba(0,0,0,0.8);
+      backdrop-filter: blur(8px);
+      -webkit-backdrop-filter: blur(8px);
+      z-index: 100;
+      display: flex;
+      justify-content: center;
+      align-items: flex-end;
+      opacity: 0;
+      pointer-events: none;
+      transition: opacity 0.3s ease;
+    }
+    .modal-overlay.active {
+      opacity: 1;
+      pointer-events: all;
+    }
+    .modal-sheet {
+      width: 100%;
+      max-width: 800px;
+      height: 90vh;
+      background: var(--bg);
+      border-radius: 32px 32px 0 0;
+      border: 1px solid var(--line);
+      border-bottom: none;
+      overflow-y: auto;
+      transform: translateY(100%);
+      transition: transform 0.4s cubic-bezier(0.16, 1, 0.3, 1);
+      display: flex;
+      flex-direction: column;
+    }
+    .modal-overlay.active .modal-sheet {
+      transform: translateY(0);
+    }
+    .modal-header {
+      padding: 24px;
+      border-bottom: 1px solid var(--line);
+      display: flex;
+      justify-content: space-between;
+      align-items: flex-start;
+      position: sticky;
+      top: 0;
+      background: rgba(9, 9, 11, 0.95);
+      z-index: 10;
+    }
+    .modal-meta {
+      font-size: 0.85rem;
+      color: var(--primary);
+      font-weight: 600;
+      margin-bottom: 8px;
+    }
+    .modal-title {
+      font-size: 1.8rem;
+      font-weight: 700;
+      margin: 0;
+      line-height: 1.2;
+    }
+    .modal-close {
+      width: 40px; height: 40px;
+      border-radius: 50%;
+      border: 1px solid var(--line);
+      background: var(--bg-soft);
+      color: white;
+      font-size: 24px;
+      display: grid;
+      place-items: center;
+      cursor: pointer;
+    }
+    
+    .modal-body {
+      padding: 24px;
+      font-size: 1.05rem;
+      line-height: 1.8;
+      color: rgba(255,255,255,0.85);
+    }
+    
+    .modal-section { margin-top: 32px; }
+    .modal-section h3 {
+      font-size: 0.9rem;
+      text-transform: uppercase;
+      letter-spacing: 0.1em;
+      color: var(--ink-soft);
+      border-bottom: 1px solid var(--line);
+      padding-bottom: 8px;
+      margin-bottom: 16px;
+    }
+    .modal-list {
+      padding-left: 20px;
+      margin: 0;
+    }
+    .modal-list li { margin-bottom: 12px; }
+    
+    .modal-actions {
+      padding: 24px;
+      display: flex;
+      gap: 12px;
+      border-top: 1px solid var(--line);
+      background: var(--bg-soft);
+      margin-top: auto;
+    }
+
+    /* Bottom Navigation */
+    .bottom-nav {
+      position: fixed;
+      bottom: 24px;
       left: 50%;
       transform: translateX(-50%);
-      bottom: 14px;
-      width: min(560px, calc(100% - 20px));
-      background: rgba(255, 250, 241, 0.92);
-      border: 1px solid rgba(24, 32, 29, 0.1);
-      border-radius: 24px;
-      box-shadow: var(--shadow);
-      display: none;
-      padding: 8px;
+      display: flex;
       gap: 8px;
-      z-index: 10;
-      backdrop-filter: blur(14px);
+      background: rgba(24, 24, 27, 0.85);
+      backdrop-filter: blur(24px);
+      -webkit-backdrop-filter: blur(24px);
+      padding: 8px;
+      border-radius: 999px;
+      border: 1px solid rgba(255,255,255,0.15);
+      box-shadow: 0 20px 40px rgba(0,0,0,0.5);
+      z-index: 50;
+      width: max-content;
+      max-width: calc(100% - 40px);
     }
 
-    .mobile-dock button {
-      flex: 1;
-      border: 0;
+    .nav-btn {
+      appearance: none;
       background: transparent;
-      padding: 10px 8px;
-      border-radius: 18px;
-      font: inherit;
-      font-size: 0.76rem;
-      font-weight: 800;
+      border: none;
       color: var(--ink-soft);
+      font-family: inherit;
+      font-size: 0.9rem;
+      font-weight: 600;
+      padding: 12px 20px;
+      border-radius: 999px;
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      transition: all 0.2s ease;
     }
 
-    .mobile-dock button.active {
-      background: rgba(36, 88, 79, 0.12);
-      color: var(--teal);
+    .nav-btn.active {
+      background: var(--ink);
+      color: var(--bg);
     }
+    
+    /* Edit blocks */
+    .edit-mode .readonly-content { display: none; }
+    .edit-mode .edit-inputs { display: block; }
+    .edit-inputs { display: none; }
+    .edit-textarea { width: 100%; min-height: 80px; margin-bottom: 12px; font-family: inherit; background: rgba(0,0,0,0.3); color: white; border: 1px solid var(--primary); border-radius: 12px; padding: 12px; }
 
-    @media (max-width: 1024px) {
-      .hero,
-      .workspace,
-      .grid-two {
-        grid-template-columns: 1fr;
-      }
-
-      .rail {
-        order: 2;
-      }
-    }
-
-    @media (max-width: 720px) {
-      #app {
-        width: calc(100% - 14px);
-        margin-top: 10px;
-      }
-
-      .shell { border-radius: 26px; }
-      .topbar,
-      .hero,
-      .workspace { padding: 16px; }
-
-      .topbar {
-        align-items: start;
-        flex-wrap: wrap;
-      }
-
-      .topbar-actions {
-        margin-left: 0;
-        width: 100%;
-        justify-content: flex-start;
-      }
-
-      .hero-metrics {
-        grid-template-columns: 1fr;
-      }
-
-      .rail {
-        display: none;
-      }
-
-      .mobile-dock {
-        display: flex;
-      }
-
-      #app {
-        padding-bottom: calc(var(--nav-height) + 54px);
-      }
-    }
   </style>
 </head>
 <body>
+  
   <div id="app">
-    <div class="shell">
-      <header class="topbar">
-        <div class="brand-mark">B</div>
-        <div class="brand-copy">
-          <div class="eyebrow">Reading Desk</div>
+    <header class="topbar">
+      <div class="brand">
+        <div class="brand-icon">✧</div>
+        <div>
           <h1>Book Notes</h1>
-          <p class="brand-note">Capture on your phone. Distill once. Keep the useful parts searchable.</p>
+          <p>AI Knowledge Hub</p>
         </div>
-        <div class="topbar-actions">
-          <span class="mini-pill" id="lastRefresh">Waiting for first sync</span>
-          <span class="status-pill live" id="syncBadge">Connected</span>
-        </div>
-      </header>
+      </div>
+      <div class="server-status live" id="syncBadge">● Live</div>
+    </header>
 
-      <section class="hero">
-        <div class="hero-panel">
-          <p class="eyebrow">Personal knowledge layer</p>
-          <h2 class="hero-title">Turn scattered reading notes into a working system.</h2>
-          <p class="hero-copy">
-            This dashboard is the practical side of the project: drop in raw notes, ask questions across your shelf,
-            and review what the pipeline has already cleaned up. The intent is not to feel like a demo. It should feel like a desk you return to.
-          </p>
-          <div class="hero-metrics">
-            <div class="metric">
-              <div class="metric-label">Notes in shelf</div>
-              <div class="metric-value" id="metricNotes">0</div>
-            </div>
-            <div class="metric">
-              <div class="metric-label">Tags tracked</div>
-              <div class="metric-value" id="metricTags">0</div>
-            </div>
-            <div class="metric">
-              <div class="metric-label">Latest source</div>
-              <div class="metric-value" id="metricSource">Manual</div>
-            </div>
+    <!-- CAPTURE TAB -->
+    <main class="panel active" id="tab-capture">
+      <div class="panel-header">
+        <h2>Capture Note</h2>
+        <p>Snap a page, record an insight, or type directly. Gemini 1.5 will organize it.</p>
+      </div>
+
+      <div class="card">
+        <datalist id="bookList"></datalist>
+        <datalist id="chapterList"></datalist>
+
+        <div class="row">
+          <div class="input-group">
+            <label>Book Title (Optional)</label>
+            <input type="text" id="capBook" list="bookList" placeholder="e.g. Atomic Habits" />
+          </div>
+          <div class="input-group">
+            <label>Chapter / Folder (Optional)</label>
+            <input type="text" id="capChapter" list="chapterList" placeholder="e.g. Chapter 1" />
           </div>
         </div>
 
-        <aside class="hero-aside">
-          <div class="aside-label">Workflow</div>
-          <h3 class="flow-title">Keep capture light.</h3>
-          <p class="flow-copy">
-            The system works best when the phone app is just your inbox and this app does the heavier organizing.
-          </p>
-          <div class="flow-list">
-            <div class="flow-item">
-              <div class="flow-step">01</div>
-              <div>
-                <strong>Capture anywhere</strong>
-                <div class="rail-copy">Type, record, scan, or paste from Google Keep.</div>
-              </div>
-            </div>
-            <div class="flow-item">
-              <div class="flow-step">02</div>
-              <div>
-                <strong>Process once</strong>
-                <div class="rail-copy">Summaries, ideas, actions, and tags are extracted in one pass.</div>
-              </div>
-            </div>
-            <div class="flow-item">
-              <div class="flow-step">03</div>
-              <div>
-                <strong>Retrieve later</strong>
-                <div class="rail-copy">Search semantically or ask direct questions across the shelf.</div>
-              </div>
-            </div>
-          </div>
-        </aside>
-      </section>
-
-      <section class="workspace">
-        <aside class="rail">
-          <div class="rail-card">
-            <h3 class="rail-title">Modes</h3>
-            <p class="rail-copy">Each view is tuned for a different moment: capture, synthesis, retrieval, or browsing.</p>
-            <div class="tab-list">
-              <button class="tab-button active" data-tab-button="capture" onclick="switchTab('capture', this)">
-                <span class="tab-kicker">Write</span>
-                <span class="tab-name">Capture</span>
-                <span class="tab-description">Send raw notes into the pipeline.</span>
-              </button>
-              <button class="tab-button" data-tab-button="ask" onclick="switchTab('ask', this)">
-                <span class="tab-kicker">Question</span>
-                <span class="tab-name">Ask</span>
-                <span class="tab-description">Get a synthesized answer from your shelf.</span>
-              </button>
-              <button class="tab-button" data-tab-button="search" onclick="switchTab('search', this)">
-                <span class="tab-kicker">Retrieve</span>
-                <span class="tab-name">Search</span>
-                <span class="tab-description">Find notes semantically, not by exact phrasing.</span>
-              </button>
-              <button class="tab-button" data-tab-button="library" onclick="switchTab('library', this)">
-                <span class="tab-kicker">Browse</span>
-                <span class="tab-name">Library</span>
-                <span class="tab-description">Read back what is already stored.</span>
-              </button>
-            </div>
-          </div>
-
-          <div class="rail-card">
-            <h3 class="rail-title">Current posture</h3>
-            <p class="rail-copy">
-              Keep is the inbox. This app is the place where notes become durable: searchable, linked, and worth keeping.
-            </p>
-          </div>
-        </aside>
-
-        <div class="panel-stack">
-          <section class="panel active" id="tab-capture">
-            <div class="panel-header">
-              <div>
-                <h2>Capture a note</h2>
-                <p>Paste raw text, dump a transcript, or review something copied from Keep. The pipeline will normalize it into a shelf-ready note.</p>
-              </div>
-              <div class="panel-badge">Process</div>
-            </div>
-
-            <div class="grid-two">
-              <div class="subpanel">
-                <label>Source</label>
-                <div class="source-switch">
-                  <button class="source-chip active" data-source="manual" onclick="selectSource(this)">
-                    <strong>Manual</strong>
-                    <span>Typed or pasted</span>
-                  </button>
-                  <button class="source-chip" data-source="keep" onclick="selectSource(this)">
-                    <strong>Google Keep</strong>
-                    <span>From your inbox</span>
-                  </button>
-                </div>
-
-                <div style="display:flex; gap: 8px; margin-bottom: 12px;">
-                  <button class="btn btn-secondary" style="flex: 1; padding: 12px; font-size: 0.9rem;" onclick="document.getElementById('cameraInput').click()">📷 Take Photo</button>
-                  <button class="btn btn-secondary" style="flex: 1; padding: 12px; font-size: 0.9rem;" id="recordBtn" onclick="toggleRecording()">🎙️ Record</button>
-                  <input type="file" id="cameraInput" accept="image/*" capture="environment" style="display: none;" onchange="handleImage(this)" />
-                </div>
-                
-                <div id="mediaPreview" style="margin-bottom: 12px; font-size: 0.85rem; color: var(--teal); font-weight: 800; display: none;"></div>
-
-                <label for="noteText">Raw note text (Optional if media attached)</label>
-                <textarea id="noteText" placeholder="Paste the note exactly as you captured it, or use the Camera/Mic above."></textarea>
-
-                <div style="margin-top:16px;">
-                  <button class="btn btn-primary" id="processBtn" onclick="processNote()">Process into shelf</button>
-                </div>
-
-                <div id="processResult"></div>
-              </div>
-
-              <div class="subpanel">
-                <h3>What this mode does</h3>
-                <p class="rail-copy">
-                  The app extracts a summary, pulls out reusable ideas, suggests actions, assigns tags, stores the note, and refreshes its embeddings.
-                </p>
-                <div class="list-block">
-                  <div class="list-item"><strong>Best input:</strong> a raw note, not a polished paragraph.</div>
-                  <div class="list-item"><strong>Typical sources:</strong> highlighted passages, spoken reflections, OCR from pages, quick paraphrases.</div>
-                  <div class="list-item"><strong>Result:</strong> one durable note that is easier to retrieve later than the original capture.</div>
-                </div>
-              </div>
-            </div>
-          </section>
-
-          <section class="panel" id="tab-ask">
-            <div class="panel-header">
-              <div>
-                <h2>Ask the shelf</h2>
-                <p>Use this when you remember the idea but not the exact book, or when you want a synthesized answer across multiple notes.</p>
-              </div>
-              <div class="panel-badge">RAG</div>
-            </div>
-
-            <div class="subpanel">
-              <label for="askText">Question</label>
-              <textarea id="askText" style="min-height: 120px;" placeholder="What have I read about habit design?&#10;Where have I written about focus and attention?&#10;Summarize my notes on leverage."></textarea>
-              <div style="margin-top:16px;">
-                <button class="btn btn-primary" id="askBtn" onclick="askAI()">Generate answer</button>
-              </div>
-              <div id="askResult"></div>
-            </div>
-          </section>
-
-          <section class="panel" id="tab-search">
-            <div class="panel-header">
-              <div>
-                <h2>Search semantically</h2>
-                <p>Search by meaning rather than exact wording. This is useful when your memory is directional but fuzzy.</p>
-              </div>
-              <div class="panel-badge">Vector</div>
-            </div>
-
-            <div class="subpanel">
-              <label for="searchText">Query</label>
-              <input type="text" id="searchText" placeholder="compound interest, systems thinking, deliberate practice" onkeydown="if(event.key==='Enter') doSearch()" />
-              <div style="margin-top:16px;">
-                <button class="btn btn-primary" onclick="doSearch()">Search shelf</button>
-              </div>
-              <div id="searchResult"></div>
-            </div>
-          </section>
-
-          <section class="panel" id="tab-library">
-            <div class="panel-header">
-              <div>
-                <h2>Browse the library</h2>
-                <p>Read back the notes already in the system, skim by tag, and discover related concepts without constructing a search query first.</p>
-              </div>
-              <div class="panel-badge">Archive</div>
-            </div>
-
-            <div class="subpanel">
-              <div class="tag-filters" id="tagFilters"></div>
-              <div id="browseResult"></div>
-            </div>
-          </section>
+        <div class="input-group">
+          <label>Note Title (Optional)</label>
+          <input type="text" id="capTitle" placeholder="A catchy headline for this thought..." />
         </div>
-      </section>
-    </div>
 
-    <nav class="mobile-dock">
-      <button class="active" data-mobile-tab="capture" onclick="switchTab('capture', this)">Capture</button>
-      <button data-mobile-tab="ask" onclick="switchTab('ask', this)">Ask</button>
-      <button data-mobile-tab="search" onclick="switchTab('search', this)">Search</button>
-      <button data-mobile-tab="library" onclick="switchTab('library', this)">Library</button>
-    </nav>
+        <div class="row">
+          <button class="btn btn-secondary" onclick="document.getElementById('cameraInput').click()">📸 Photo OCR</button>
+          <button class="btn btn-secondary" id="recordBtn" onclick="toggleRecording()">🎙️ Transcribe</button>
+          <input type="file" id="cameraInput" accept="image/*" capture="environment" style="display: none;" onchange="handleImage(this)" />
+        </div>
+
+        <div id="mediaPreview"></div>
+
+        <div class="input-group">
+          <label>Raw Copy / Manual Entry</label>
+          <textarea id="capText" placeholder="Paste text here, or use the camera/mic above to auto-transcribe..."></textarea>
+        </div>
+
+        <button class="btn btn-primary" style="width: 100%;" id="processBtn" onclick="processCapture()">
+          Process & Organise ✦
+        </button>
+
+        <div id="processResult"></div>
+      </div>
+    </main>
+
+    <!-- BROWSE TAB -->
+    <main class="panel" id="tab-browse">
+      <div class="panel-header">
+        <h2>Library</h2>
+        <p>Your categorized book notes and insights.</p>
+      </div>
+      
+      <div class="tags-row" id="tagFilters" style="margin-bottom: 24px;"></div>
+      
+      <div id="libraryContainer"></div>
+    </main>
+
+    <!-- ASK AI TAB -->
+    <main class="panel" id="tab-ask">
+      <div class="panel-header">
+        <h2>Ask AI</h2>
+        <p>Chat natively with your entire book collection.</p>
+      </div>
+
+      <div class="card">
+        <textarea id="askText" placeholder="e.g. What have I read about building stronger habits?" style="min-height:100px; margin-bottom:16px;"></textarea>
+        <button class="btn btn-primary" style="width: 100%;" id="askBtn" onclick="askAI()">Search Brain</button>
+        <div id="askResult"></div>
+      </div>
+    </main>
   </div>
 
+  <!-- READING MODAL -->
+  <div class="modal-overlay" id="readingModal">
+    <div class="modal-sheet">
+      <div class="modal-header">
+        <div>
+          <div class="modal-meta" id="modMeta">Book Title / Chapter</div>
+          <h2 class="modal-title" id="modTitle">Note Title</h2>
+        </div>
+        <button class="modal-close" onclick="closeModal()">×</button>
+      </div>
+      
+      <div class="modal-body" id="modContent">
+        <!-- Rendered via JS -->
+      </div>
+      
+      <div class="modal-actions">
+        <button class="btn btn-secondary" style="flex:1" onclick="shareCurrentNote()">📤 Share</button>
+        <button class="btn btn-secondary" style="flex:1" id="editBtn" onclick="toggleEditMode()">✏️ Edit</button>
+        <button class="btn btn-danger" style="flex:1" onclick="deleteCurrentNote()">🗑️ Delete</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- BOTTOM NAVIGATION -->
+  <nav class="bottom-nav">
+    <button class="nav-btn active" onclick="switchTab('capture', this)">✦ Capture</button>
+    <button class="nav-btn" onclick="switchTab('browse', this)">📚 Library</button>
+    <button class="nav-btn" onclick="switchTab('ask', this)">✨ Ask AI</button>
+  </nav>
+
   <script>
-    const API = "";
-
-    let currentSource = "manual";
-    let activeTag = null;
+    const API = ""; 
     let allNotes = [];
+    let activeTag = null;
+    let currentNoteId = null;
 
-    function switchTab(name, trigger) {
-      document.querySelectorAll(".panel").forEach((panel) => panel.classList.remove("active"));
-      document.querySelectorAll("[data-tab-button]").forEach((button) => button.classList.remove("active"));
-      document.querySelectorAll("[data-mobile-tab]").forEach((button) => button.classList.remove("active"));
-
-      document.getElementById(`tab-${name}`).classList.add("active");
-
-      const railButton = document.querySelector(`[data-tab-button="${name}"]`);
-      const mobileButton = document.querySelector(`[data-mobile-tab="${name}"]`);
-      if (railButton) railButton.classList.add("active");
-      if (mobileButton) mobileButton.classList.add("active");
-
-      if (name === "library") {
-        loadBrowse();
-      }
-
-      if (trigger && trigger.dataset.mobileTab) {
-        document.querySelector(".shell").scrollIntoView({ behavior: "smooth", block: "start" });
-      }
-    }
-
-    function selectSource(element) {
-      document.querySelectorAll(".source-chip").forEach((chip) => chip.classList.remove("active"));
-      element.classList.add("active");
-      currentSource = element.dataset.source;
-    }
-
-    function timeAgo(iso) {
-      if (!iso) return "";
-      const date = new Date(iso);
-      const seconds = Math.round((Date.now() - date.getTime()) / 1000);
-      if (seconds < 60) return "just now";
-      if (seconds < 3600) return `${Math.floor(seconds / 60)}m ago`;
-      if (seconds < 86400) return `${Math.floor(seconds / 3600)}h ago`;
-      if (seconds < 604800) return `${Math.floor(seconds / 86400)}d ago`;
-      return date.toLocaleDateString(undefined, { month: "short", day: "numeric" });
-    }
-
-    function formatSource(source) {
-      if (!source) return "Manual";
-      return source.replace(/-/g, " ").replace(/\b\w/g, (letter) => letter.toUpperCase());
-    }
-
-    function simColor(score) {
-      if (score >= 0.7) return "#1f7a62";
-      if (score >= 0.5) return "#9b4d2f";
-      return "#5d6763";
-    }
-
-    function tagChips(tags) {
-      if (!tags || !tags.length) return "";
-      return tags.slice(0, 6).map((tag) =>
-        `<button class="tag" onclick="filterByTag('${escapeSingleQuotes(tag)}')">#${tag}</button>`
-      ).join("");
-    }
-
-    function setBtn(id, loading, label) {
-      const button = document.getElementById(id);
-      button.disabled = loading;
-      button.innerHTML = loading ? `<span class="spinner"></span>${label}` : label;
-    }
-
-    function escapeSingleQuotes(value) {
-      return String(value).replace(/'/g, "\\'");
-    }
-
-    function renderStatus(kind, text) {
-      return `<div class="status ${kind}">${text}</div>`;
-    }
-
-    function updateMetrics(notes) {
-      const tagSet = new Set();
-      notes.forEach((note) => (note.tags || []).forEach((tag) => tagSet.add(tag)));
-      document.getElementById("metricNotes").textContent = String(notes.length);
-      document.getElementById("metricTags").textContent = String(tagSet.size);
-      document.getElementById("metricSource").textContent = notes[0]?.source ? formatSource(notes[0].source) : "Manual";
-      document.getElementById("lastRefresh").textContent = notes.length
-        ? `Updated ${timeAgo(notes[0].created_at)}`
-        : "No notes yet";
-    }
-
-    async function refreshMetrics() {
-      try {
-        const response = await fetch(`${API}/api/notes?limit=50`);
-        if (!response.ok) throw new Error("offline");
-        const data = await response.json();
-        allNotes = data.notes || [];
-        updateMetrics(allNotes);
-      } catch (_) {
-        const badge = document.getElementById("syncBadge");
-        badge.classList.remove("live");
-        badge.classList.add("offline");
-        badge.textContent = "Offline";
-        document.getElementById("lastRefresh").textContent = "API unavailable";
-      }
-    }
-
+    // --- PWA Init ---
     if ('serviceWorker' in navigator) {
-      navigator.serviceWorker.register('/static/sw.js').catch(err => console.log('SW registration failed:', err));
+      navigator.serviceWorker.register('/static/sw.js').catch(err => console.log('SW failed:', err));
     }
 
-    let capturedMedia = null; // Can hold a File or Blob
+    // --- Navigation ---
+    function switchTab(tabId, btn) {
+      document.querySelectorAll('.panel').forEach(p => p.classList.remove('active'));
+      document.querySelectorAll('.nav-btn').forEach(b => b.classList.remove('active'));
+      document.getElementById('tab-' + tabId).classList.add('active');
+      btn.classList.add('active');
+      
+      if (tabId === 'browse') loadLibrary();
+    }
+
+    // --- Globals & Initial loads ---
+    async function init() {
+      await loadFolders();
+      // Test server connection
+      try {
+        await fetch(`${API}/api/folders`);
+        document.getElementById("syncBadge").className = "server-status live";
+        document.getElementById("syncBadge").textContent = "● Live connected";
+      } catch(e) {
+        document.getElementById("syncBadge").className = "server-status offline";
+        document.getElementById("syncBadge").textContent = "○ Offline";
+      }
+    }
+    init();
+
+    // --- Capture API ---
+    let capturedMedia = null;
     let mediaRecorder = null;
     let audioChunks = [];
 
     function handleImage(input) {
       if (input.files && input.files[0]) {
         capturedMedia = input.files[0];
-        document.getElementById("mediaPreview").style.display = "block";
-        document.getElementById("mediaPreview").textContent = `📎 Photo attached: ${capturedMedia.name}`;
+        const mp = document.getElementById("mediaPreview");
+        mp.style.display = "block";
+        mp.textContent = `📎 Photo attached: ${capturedMedia.name}`;
       }
     }
 
@@ -1276,7 +747,7 @@
       
       if (mediaRecorder && mediaRecorder.state === "recording") {
         mediaRecorder.stop();
-        btn.textContent = "🎙️ Record";
+        btn.innerHTML = "🎙️ Transcribe";
         btn.style.color = "inherit";
         return;
       }
@@ -1292,25 +763,32 @@
 
         mediaRecorder.onstop = () => {
           capturedMedia = new Blob(audioChunks, { type: 'audio/webm' });
-          document.getElementById("mediaPreview").style.display = "block";
-          document.getElementById("mediaPreview").textContent = `🎤 Audio attached (${(capturedMedia.size / 1024).toFixed(1)} KB)`;
+          const mp = document.getElementById("mediaPreview");
+          mp.style.display = "block";
+          mp.textContent = `🎤 Audio attached (${(capturedMedia.size / 1024).toFixed(1)} KB)`;
           stream.getTracks().forEach(track => track.stop());
         };
 
         mediaRecorder.start();
-        btn.textContent = "🛑 Stop";
+        btn.innerHTML = "🛑 Stop Recording";
         btn.style.color = "var(--error)";
       } catch (err) {
-        alert("Microphone access denied or unavailable.");
+        alert("Microphone access denied. Pls ensure HTTPS/Secure Context.");
       }
     }
 
-    async function processNote() {
-      const text = document.getElementById("noteText").value.trim();
+    async function processCapture() {
+      const text = document.getElementById("capText").value.trim();
+      const book = document.getElementById("capBook").value.trim();
+      const chapter = document.getElementById("capChapter").value.trim();
+      const title = document.getElementById("capTitle").value.trim();
+      
       if (!text && !capturedMedia) return;
 
-      setBtn("processBtn", true, "Processing media...");
-      document.getElementById("processResult").innerHTML = renderStatus("loading", "Extracting OCR/speech, generating summary, and storing.");
+      const btn = document.getElementById("processBtn");
+      btn.innerHTML = '<div class="spinner"></div> Working...';
+      btn.disabled = true;
+      document.getElementById("processResult").innerHTML = `<div class="status-msg loading"><div class="spinner"></div> Extracting intelligence...</div>`;
 
       try {
         let response;
@@ -1318,260 +796,319 @@
           const formData = new FormData();
           formData.append("file", capturedMedia, capturedMedia.type.includes('audio') ? 'recording.webm' : 'photo.jpg');
           if (text) formData.append("text", text);
-          formData.append("source", currentSource);
+          if (book) formData.append("book_title", book);
+          if (chapter) formData.append("chapter", chapter);
+          if (title) formData.append("title", title);
 
-          response = await fetch(`${API}/api/process_media`, {
-            method: "POST",
-            body: formData
-          });
+          response = await fetch(`${API}/api/process_media`, { method: "POST", body: formData });
         } else {
           response = await fetch(`${API}/api/process`, {
             method: "POST",
             headers: { "Content-Type": "application/json" },
-            body: JSON.stringify({ raw_text: text, source: currentSource })
+            body: JSON.stringify({ raw_text: text, book_title: book || null, chapter: chapter || null, title: title || null })
           });
         }
 
         const data = await response.json();
-        if (!response.ok) throw new Error(data.detail || "Unable to process note.");
+        if (!response.ok) throw new Error(data.detail || "Processing failed.");
 
-        const ideas = (data.ideas || []).map((idea) => `<div class="list-item">${idea}</div>`).join("");
-        const actions = (data.actions || []).map((action) => `<div class="list-item">${action}</div>`).join("");
-
-        document.getElementById("processResult").innerHTML = `
-          ${renderStatus("success", "Stored successfully. The note is now part of the shelf.")}
-          <div class="result-block">
-            <p class="result-title">Processed result</p>
-            <h3 style="margin:0 0 12px; font-size:1.25rem; letter-spacing:-0.03em;">${data.book_title || "Unknown book"}</h3>
-            <div class="summary-box">${data.summary || "No summary generated."}</div>
-            ${(data.tags || []).length ? `<div style="margin-top:14px;" class="chip-row">${tagChips(data.tags)}</div>` : ""}
-            ${ideas ? `<div style="margin-top:16px;"><p class="section-title">Ideas</p><div class="list-block">${ideas}</div></div>` : ""}
-            ${actions ? `<div style="margin-top:16px;"><p class="section-title">Actions</p><div class="list-block">${actions}</div></div>` : ""}
-          </div>
-        `;
-        document.getElementById("noteText").value = "";
+        document.getElementById("processResult").innerHTML = `<div class="status-msg success">✓ Stored successfully to Library!</div>`;
+        
+        // Reset form
+        document.getElementById("capText").value = "";
+        document.getElementById("capTitle").value = "";
         capturedMedia = null;
-        const mp = document.getElementById("mediaPreview");
-        if(mp) mp.style.display = "none";
-        const ci = document.getElementById("cameraInput");
-        if(ci) ci.value = "";
-
-        await refreshMetrics();
+        document.getElementById("mediaPreview").style.display = "none";
+        document.getElementById("cameraInput").value = "";
+        
+        loadFolders(); // Refresh folders
       } catch (error) {
-        document.getElementById("processResult").innerHTML = renderStatus("error", error.message);
+        document.getElementById("processResult").innerHTML = `<div class="status-msg error">⚠ ${error.message}</div>`;
       }
 
-      setBtn("processBtn", false, "Process into shelf");
+      btn.innerHTML = 'Process & Organise ✦';
+      btn.disabled = false;
     }
 
-    async function askAI() {
-      const question = document.getElementById("askText").value.trim();
-      if (!question) return;
-
-      setBtn("askBtn", true, "Thinking");
-      document.getElementById("askResult").innerHTML = renderStatus("loading", "Searching the shelf and composing an answer.");
-
+    // --- Library API ---
+    async function loadFolders() {
       try {
-        const response = await fetch(`${API}/api/ask`, {
-          method: "POST",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({ question })
+        const res = await fetch(`${API}/api/folders`);
+        const data = await res.json();
+        const bl = document.getElementById("bookList");
+        const cl = document.getElementById("chapterList");
+        
+        const books = new Set();
+        const chapters = new Set();
+        
+        (data.folders || []).forEach(f => {
+          if (f.book_title) books.add(f.book_title);
+          if (f.chapter) chapters.add(f.chapter);
         });
-        const data = await response.json();
-        if (!response.ok) throw new Error(data.detail || "Unable to answer question.");
-
-        const sources = (data.sources || []).map((source) => `
-          <div class="source-card">
-            <div>
-              <div class="source-card-title">${source.book_title || "Unknown book"}</div>
-              <div class="note-sub">${source.summary || "No summary available."}</div>
-            </div>
-            <span class="sim-badge" style="color:${simColor(source.similarity)}">${Math.round(source.similarity * 100)}%</span>
-          </div>
-        `).join("");
-
-        document.getElementById("askResult").innerHTML = `
-          <div class="result-block">
-            <p class="result-title">Answer</p>
-            <div class="answer-box">
-              <div class="answer-text">${data.answer || "No answer found."}</div>
-            </div>
-            ${sources ? `<div style="margin-top:18px;"><p class="section-title">Supporting notes</p>${sources}</div>` : ""}
-          </div>
-        `;
-      } catch (error) {
-        document.getElementById("askResult").innerHTML = renderStatus("error", error.message);
-      }
-
-      setBtn("askBtn", false, "Generate answer");
-    }
-
-    async function doSearch() {
-      const query = document.getElementById("searchText").value.trim();
-      if (!query) return;
-
-      document.getElementById("searchResult").innerHTML = renderStatus("loading", "Searching for semantically related notes.");
-
-      try {
-        const response = await fetch(`${API}/api/search`, {
-          method: "POST",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({ query, limit: 8, threshold: 0.3 })
-        });
-        const data = await response.json();
-        if (!response.ok) throw new Error(data.detail || "Unable to search notes.");
-
-        const results = data.results || [];
-        if (!results.length) {
-          document.getElementById("searchResult").innerHTML = `<div class="empty">No close matches yet. Try a broader concept or a different phrasing.</div>`;
-          return;
-        }
-
-        document.getElementById("searchResult").innerHTML = `
-          <div class="note-grid">
-            ${results.map((note) => renderNoteCard(note, { showSimilarity: true })).join("")}
-          </div>
-        `;
-      } catch (error) {
-        document.getElementById("searchResult").innerHTML = renderStatus("error", error.message);
+        
+        bl.innerHTML = Array.from(books).map(b => `<option value="${b}">`).join('');
+        cl.innerHTML = Array.from(chapters).map(c => `<option value="${c}">`).join('');
+      } catch (e) {
+        console.error("Failed to load folders");
       }
     }
 
-    async function loadBrowse() {
-      document.getElementById("browseResult").innerHTML = renderStatus("loading", "Loading stored notes.");
-
+    async function loadLibrary() {
+      document.getElementById("libraryContainer").innerHTML = `<div class="status-msg loading"><div class="spinner"></div> Fetching vault...</div>`;
+      
       try {
-        const url = activeTag
-          ? `${API}/api/notes?limit=50&tag=${encodeURIComponent(activeTag)}`
-          : `${API}/api/notes?limit=50`;
-        const response = await fetch(url);
-        const data = await response.json();
-        if (!response.ok) throw new Error(data.detail || "Unable to load notes.");
+        const url = activeTag ? `${API}/api/notes?limit=100&tag=${encodeURIComponent(activeTag)}` : `${API}/api/notes?limit=100`;
+        const res = await fetch(url);
+        const data = await res.json();
         allNotes = data.notes || [];
-        renderNotes(allNotes);
-        buildTagFilters(allNotes);
-        updateMetrics(allNotes);
+        
+        renderTags(allNotes);
+        renderHierarchy(allNotes);
       } catch (error) {
-        document.getElementById("browseResult").innerHTML = renderStatus("error", error.message);
+        document.getElementById("libraryContainer").innerHTML = `<div class="status-msg error">⚠ ${error.message}</div>`;
       }
     }
 
-    function buildTagFilters(notes) {
+    function renderTags(notes) {
       const counts = {};
-      notes.forEach((note) => (note.tags || []).forEach((tag) => { counts[tag] = (counts[tag] || 0) + 1; }));
-      const sorted = Object.entries(counts).sort((left, right) => right[1] - left[1]).slice(0, 12);
-
-      document.getElementById("tagFilters").innerHTML = [
-        `<button class="tag ${!activeTag ? "active" : ""}" onclick="filterByTag(null)">All (${notes.length})</button>`,
-        ...sorted.map(([tag, count]) =>
-          `<button class="tag ${activeTag === tag ? "active" : ""}" onclick="filterByTag('${escapeSingleQuotes(tag)}')">#${tag} (${count})</button>`
-        )
-      ].join("");
-    }
-
-    function filterByTag(tag) {
-      activeTag = tag;
-      loadBrowse();
-    }
-
-    function renderNotes(notes) {
-      if (!notes.length) {
-        document.getElementById("browseResult").innerHTML = `<div class="empty">No notes yet. Process one raw note and this view becomes useful immediately.</div>`;
-        return;
-      }
-
-      document.getElementById("browseResult").innerHTML = `<div class="note-grid">${notes.map((note, index) => renderBrowseCard(note, index)).join("")}</div>`;
-    }
-
-    function renderNoteCard(note, options = {}) {
-      return `
-        <article class="note-card">
-          <div class="note-head">
-            <div class="note-mark">${note.source === "keep" ? "K" : "B"}</div>
-            <div class="note-meta">
-              <h3 class="note-title">${note.book_title || "Untitled note"}</h3>
-              <div class="note-sub">${timeAgo(note.created_at)} · ${formatSource(note.source)}</div>
-            </div>
-            ${options.showSimilarity ? `<span class="sim-badge" style="color:${simColor(note.similarity)}">${Math.round(note.similarity * 100)}%</span>` : ""}
-          </div>
-          <div class="note-body">${note.summary || "No summary available."}</div>
-          ${(note.tags || []).length ? `<div class="utility-row">${tagChips(note.tags)}</div>` : ""}
-        </article>
+      notes.forEach(n => (n.tags || []).forEach(t => counts[t] = (counts[t] || 0) + 1));
+      const sorted = Object.entries(counts).sort((a,b) => b[1] - a[1]).slice(0, 15);
+      
+      document.getElementById("tagFilters").innerHTML = `
+        <button class="tag ${!activeTag ? 'active':''}" onclick="setTag(null)">All</button>
+        ${sorted.map(([t, c]) => `<button class="tag ${t === activeTag ? 'active':''}" onclick="setTag('${t}')">#${t} (${c})</button>`).join('')}
       `;
     }
 
-    function renderBrowseCard(note, index) {
-      return `
-        <article class="note-card" id="note-${index}">
-          <div class="note-head">
-            <div class="note-mark">${note.source === "keep" ? "K" : "B"}</div>
-            <div class="note-meta">
-              <h3 class="note-title">${note.book_title || "Untitled note"}</h3>
-              <div class="note-sub">${timeAgo(note.created_at)} · ${formatSource(note.source)}</div>
-            </div>
-          </div>
-          <div class="note-body collapsed" id="body-${index}">${note.summary || "No summary available."}</div>
-          <div class="utility-row">
-            <button class="expand-btn" onclick="toggleExpand(${index})">Expand note</button>
-            ${tagChips(note.tags)}
-            <button class="link-btn" onclick="findConnections(${index}, '${note.id}')" id="conn-btn-${index}">Find connections</button>
-          </div>
-          <div class="connections" id="connections-${index}"></div>
-        </article>
-      `;
+    function setTag(t) {
+      activeTag = t;
+      loadLibrary();
     }
 
-    function toggleExpand(index) {
-      const body = document.getElementById(`body-${index}`);
-      const button = body.parentElement.querySelector(".expand-btn");
-      body.classList.toggle("collapsed");
-      button.textContent = body.classList.contains("collapsed") ? "Expand note" : "Collapse note";
-    }
-
-    async function findConnections(index, noteId) {
-      const container = document.getElementById(`connections-${index}`);
-      const button = document.getElementById(`conn-btn-${index}`);
-
-      if (container.style.display === "block") {
-        container.style.display = "none";
-        button.textContent = "Find connections";
+    function renderHierarchy(notes) {
+      if(!notes.length) {
+        document.getElementById("libraryContainer").innerHTML = `<div class="status-msg">Library is empty. Go capture something!</div>`;
         return;
       }
+      
+      // Group by Book -> Chapter
+      const tree = {};
+      notes.forEach(note => {
+        const b = note.book_title || "Uncategorized";
+        const c = note.chapter || "General";
+        if (!tree[b]) tree[b] = {};
+        if (!tree[b][c]) tree[b][c] = [];
+        tree[b][c].push(note);
+      });
 
-      button.innerHTML = `<span class="spinner"></span>Loading`;
-      container.style.display = "block";
-      container.innerHTML = renderStatus("loading", "Looking for nearby ideas.");
+      let html = '<div class="folder-tree">';
+      for (const [book, chapters] of Object.entries(tree)) {
+        html += `<div class="book-group">
+          <div class="book-header" onclick="this.parentElement.classList.toggle('open')">
+            <i>📚</i> ${book}
+          </div>
+          <div class="chapter-group">`;
+        
+        for (const [chap, nts] of Object.entries(chapters)) {
+          if(chap !== "General") html += `<div class="chapter-header">📑 ${chap}</div>`;
+          html += `<div class="note-list">`;
+          nts.forEach(note => {
+            html += `
+              <div class="note-card" onclick="openNote('${note.id}')">
+                <h4>${note.title || "Untitled Insight"}</h4>
+                <p>${note.summary || "No summary available."}</p>
+              </div>`;
+          });
+          html += `</div>`;
+        }
+        
+        html += `</div></div>`;
+      }
+      html += '</div>';
+      
+      document.getElementById("libraryContainer").innerHTML = html;
+    }
+
+    // --- Note Modal (View / Edit / Delete) ---
+    async function openNote(id) {
+      currentNoteId = id;
+      const modal = document.getElementById("readingModal");
+      const content = document.getElementById("modContent");
+      document.getElementById("modMeta").textContent = "Loading...";
+      document.getElementById("modTitle").textContent = "";
+      content.innerHTML = `<div class="spinner" style="margin:20px auto; border-color:#6366f1; border-right-color:transparent;"></div>`;
+      
+      modal.classList.add("active");
+      document.body.style.overflow = "hidden"; // Prevent background scroll
+      
+      try {
+        const res = await fetch(`${API}/api/notes/${id}`);
+        const note = await res.json();
+        
+        const b = note.book_title || "Uncategorized";
+        const c = note.chapter || "General";
+        document.getElementById("modMeta").textContent = `${b} / ${c}`;
+        document.getElementById("modTitle").textContent = note.title || "Untitled Insight";
+        
+        const ideas = (note.ideas || []).map(i => `<li>${i}</li>`).join("");
+        const actions = (note.actions || []).map(a => `<li>${a}</li>`).join("");
+        const tags = (note.tags || []).join(", ");
+        
+        content.innerHTML = `
+          <div id="readView" class="readonly-content">
+            <div style="background:rgba(255,255,255,0.05); padding:16px; border-radius:16px; margin-bottom:24px;">
+              ${note.summary || ""}
+            </div>
+            
+            ${ideas ? `
+            <div class="modal-section">
+              <h3>Key Ideas</h3>
+              <ul class="modal-list">${ideas}</ul>
+            </div>` : ""}
+            
+            ${actions ? `
+            <div class="modal-section">
+              <h3>Action Items</h3>
+              <ul class="modal-list" style="color:#10b981;">${actions}</ul>
+            </div>` : ""}
+            
+            ${tags ? `<div style="margin-top:24px; font-size:0.8rem; color:var(--ink-soft);"><span style="color:var(--primary)">#</span> ${tags}</div>` : ""}
+          </div>
+          
+          <div id="editView" class="edit-inputs">
+            <label>Title</label>
+            <input type="text" id="editTitle" class="edit-textarea" style="min-height:48px;" value="${note.title || ''}" />
+            <label>Book</label>
+            <input type="text" id="editBook" class="edit-textarea" style="min-height:48px;" value="${note.book_title || ''}" />
+            <label>Chapter</label>
+            <input type="text" id="editChapter" class="edit-textarea" style="min-height:48px;" value="${note.chapter || ''}" />
+            
+            <label>Summary</label>
+            <textarea id="editSummary" class="edit-textarea">${note.summary || ''}</textarea>
+            
+            <label>Ideas (One per line)</label>
+            <textarea id="editIdeas" class="edit-textarea">${(note.ideas || []).join('\n')}</textarea>
+            
+            <label>Actions (One per line)</label>
+            <textarea id="editActions" class="edit-textarea">${(note.actions || []).join('\n')}</textarea>
+            
+            <label>Tags (Comma separated)</label>
+            <textarea id="editTags" class="edit-textarea">${(note.tags || []).join(', ')}</textarea>
+            
+            <button class="btn btn-primary" style="width:100%; margin-top:16px;" onclick="saveEdits()">💾 Save Changes</button>
+          </div>
+        `;
+        
+        document.getElementById("modContent").classList.remove("edit-mode");
+        document.getElementById("editBtn").textContent = "✏️ Edit";
+        
+      } catch (e) {
+        content.innerHTML = `<div class="status-msg error">Failed to load note data.</div>`;
+      }
+    }
+
+    function closeModal() {
+      document.getElementById("readingModal").classList.remove("active");
+      document.body.style.overflow = "auto";
+      currentNoteId = null;
+    }
+
+    function toggleEditMode() {
+      const box = document.getElementById("modContent");
+      const isEdit = box.classList.contains("edit-mode");
+      if (isEdit) {
+        box.classList.remove("edit-mode");
+        document.getElementById("editBtn").textContent = "✏️ Edit";
+      } else {
+        box.classList.add("edit-mode");
+        document.getElementById("editBtn").textContent = "👀 View";
+      }
+    }
+
+    async function saveEdits() {
+      if (!currentNoteId) return;
+      
+      const payload = {
+        title: document.getElementById("editTitle").value.trim() || null,
+        book_title: document.getElementById("editBook").value.trim() || null,
+        chapter: document.getElementById("editChapter").value.trim() || null,
+        summary: document.getElementById("editSummary").value.trim() || null,
+        ideas: document.getElementById("editIdeas").value.split('\n').map(s=>s.trim()).filter(Boolean),
+        actions: document.getElementById("editActions").value.split('\n').map(s=>s.trim()).filter(Boolean),
+        tags: document.getElementById("editTags").value.split(',').map(s=>s.trim()).filter(Boolean)
+      };
 
       try {
-        const response = await fetch(`${API}/api/notes/${noteId}/link?limit=3`);
-        const data = await response.json();
-        if (!response.ok) throw new Error(data.detail || "Unable to load related notes.");
-
-        const related = data.related || [];
-        if (!related.length) {
-          container.innerHTML = `<div class="empty">No strong links yet for this note.</div>`;
-        } else {
-          container.innerHTML = related.map((note) => `
-            <div class="connection-card" onclick="openSearchFromConnection('${escapeSingleQuotes(note.book_title || "")}')">
-              <div class="source-card-title">${note.book_title || "Unknown note"}</div>
-              <div class="note-sub">${note.summary || ""}</div>
-            </div>
-          `).join("");
-        }
-      } catch (error) {
-        container.innerHTML = renderStatus("error", error.message);
+        await fetch(`${API}/api/notes/${currentNoteId}`, {
+          method: "PUT",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify(payload)
+        });
+        
+        // Reload current note modal
+        openNote(currentNoteId);
+        // Refresh library in background
+        loadLibrary();
+      } catch(e) {
+        alert("Failed to save changes.");
       }
-
-      button.textContent = "Close";
     }
 
-    function openSearchFromConnection(title) {
-      document.getElementById("searchText").value = title;
-      switchTab("search");
-      doSearch();
+    async function deleteCurrentNote() {
+      if (!currentNoteId) return;
+      if (!confirm("Are you sure you want to completely delete this insight?")) return;
+
+      try {
+        await fetch(`${API}/api/notes/${currentNoteId}`, { method: "DELETE" });
+        closeModal();
+        loadLibrary();
+      } catch (e) {
+        alert("Failed to delete note.");
+      }
+    }
+    
+    async function shareCurrentNote() {
+      const title = document.getElementById("modTitle").textContent;
+      const text = document.getElementById("readView").innerText;
+      
+      if (navigator.share) {
+        try {
+          await navigator.share({ title: title, text: text });
+        } catch(e) { console.log(e); }
+      } else {
+        navigator.clipboard.writeText(`${title}\n\n${text}`);
+        alert("Note copied to clipboard!");
+      }
     }
 
-    refreshMetrics();
+    // --- AI Chat ---
+    async function askAI() {
+      const text = document.getElementById("askText").value.trim();
+      if(!text) return;
+      
+      const btn = document.getElementById("askBtn");
+      btn.innerHTML = '<div class="spinner"></div> Searching Brain...';
+      document.getElementById("askResult").innerHTML = '';
+      
+      try {
+        const res = await fetch(`${API}/api/ask`, {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ question: text })
+        });
+        const data = await res.json();
+        
+        document.getElementById("askResult").innerHTML = `
+          <div style="background:var(--primary-soft); border-radius:16px; padding:20px; margin-top:20px; line-height:1.7; font-size:1.05rem;">
+            ${data.answer}
+          </div>
+        `;
+      } catch(e) {
+        document.getElementById("askResult").innerHTML = `<div class="status-msg error">Failed to connect to AI server.</div>`;
+      }
+      
+      btn.innerHTML = 'Search Brain';
+    }
   </script>
 </body>
 </html>
