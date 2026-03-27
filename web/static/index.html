@@ -635,6 +635,21 @@
       </div>
     </main>
 
+    <!-- SEARCH TAB -->
+    <main class="panel" id="tab-search">
+      <div class="panel-header">
+        <h2>Semantic Search</h2>
+        <p>Find notes by meaning and concepts, not just exact keywords.</p>
+      </div>
+      <div class="card">
+        <div class="row" style="margin-bottom: 0;">
+          <input type="text" id="searchInput" placeholder="Search by concept..." onkeypress="if(event.key==='Enter') doSearch()" />
+          <button class="btn btn-primary" id="searchBtn" style="flex:0" onclick="doSearch()">Search</button>
+        </div>
+        <div id="searchResult" style="margin-top: 16px;"></div>
+      </div>
+    </main>
+
     <!-- BROWSE TAB -->
     <main class="panel" id="tab-browse">
       <div class="panel-header">
@@ -689,6 +704,7 @@
   <nav class="bottom-nav">
     <button class="nav-btn active" onclick="switchTab('capture', this)">✦ Capture</button>
     <button class="nav-btn" onclick="switchTab('browse', this)">📚 Library</button>
+    <button class="nav-btn" onclick="switchTab('search', this)">🔍 Search</button>
     <button class="nav-btn" onclick="switchTab('ask', this)">✨ Ask AI</button>
   </nav>
 
@@ -1079,6 +1095,45 @@
         navigator.clipboard.writeText(`${title}\n\n${text}`);
         alert("Note copied to clipboard!");
       }
+    }
+
+    // --- Search API ---
+    async function doSearch() {
+      const q = document.getElementById("searchInput").value.trim();
+      if(!q) return;
+
+      const btn = document.getElementById("searchBtn");
+      btn.innerHTML = '<div class="spinner"></div>';
+      document.getElementById("searchResult").innerHTML = '';
+
+      try {
+        const res = await fetch(`${API}/api/search`, {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ query: q, limit: 10, threshold: 0.1 })
+        });
+        const data = await res.json();
+        
+        let html = '<div class="note-grid">';
+        (data.results || []).forEach(r => {
+          const sim = Math.round(r.similarity * 100);
+          html += `
+            <div class="note-card" onclick="openNote('${r.note_id}')">
+              <div style="display:flex; justify-content:space-between; margin-bottom:8px;">
+                <span style="font-size:0.8rem; color:var(--primary); font-weight:600;">${sim}% Match</span>
+                <span style="font-size:0.8rem; color:var(--ink-soft);">${r.book_title || 'General'}</span>
+              </div>
+              <p style="margin:0">${r.summary || "No summary"}</p>
+            </div>`;
+        });
+        html += '</div>';
+        
+        if(!data.results?.length) html = `<div class="status-msg">No conceptual matches found.</div>`;
+        document.getElementById("searchResult").innerHTML = html;
+      } catch (e) {
+        document.getElementById("searchResult").innerHTML = `<div class="status-msg error">Search failed: ${e.message}</div>`;
+      }
+      btn.innerHTML = 'Search';
     }
 
     // --- AI Chat ---
