@@ -31,6 +31,7 @@ Extract knowledge from this book note:
 
 Return a JSON object with exactly these keys:
 {{
+  "title": "<A catchy, specific 3-6 word title for this note>",
   "book_title": "<inferred title or null if unclear>",
   "summary": "<3-5 bullet points joined by newlines, each starting with •>",
   "ideas": ["<key idea 1>", "<key idea 2>", ...],
@@ -39,6 +40,7 @@ Return a JSON object with exactly these keys:
 }}
 
 Rules:
+- title: 3-6 words characterizing the specific thought or insight
 - summary: 3-5 concise bullets
 - ideas: the most important conceptual insights (3-8 items)
 - tags: 3-7 lowercase single-word or hyphenated tags (e.g. "decision-making", "habits")
@@ -80,6 +82,7 @@ def process_note(raw_text: str) -> dict:
 
     # Ensure all expected keys exist with sane defaults
     return {
+        "title": result.get("title"),
         "book_title": result.get("book_title"),
         "summary": result.get("summary", ""),
         "ideas": result.get("ideas") or [],

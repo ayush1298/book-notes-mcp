@@ -595,23 +595,28 @@
       </div>
 
       <div class="card">
-        <datalist id="bookList"></datalist>
-        <datalist id="chapterList"></datalist>
-
         <div class="row">
           <div class="input-group">
-            <label>Book Title (Optional)</label>
-            <input type="text" id="capBook" list="bookList" placeholder="e.g. Atomic Habits" />
+            <label>Book</label>
+            <select id="capBookSelect" onchange="toggleNewInput('capBookSelect', 'capBook')" style="width:100%; padding:15px; border-radius:16px; background:rgba(0,0,0,0.2); color:white; border:1px solid var(--line); font-family:inherit; font-size:1rem; margin-bottom:8px;">
+              <option value="">General (Default)</option>
+              <option value="__NEW__">➕ Add New Book...</option>
+            </select>
+            <input type="text" id="capBook" placeholder="New Book Title..." style="display:none;" />
           </div>
           <div class="input-group">
-            <label>Chapter / Folder (Optional)</label>
-            <input type="text" id="capChapter" list="chapterList" placeholder="e.g. Chapter 1" />
+            <label>Chapter</label>
+            <select id="capChapterSelect" onchange="toggleNewInput('capChapterSelect', 'capChapter')" style="width:100%; padding:15px; border-radius:16px; background:rgba(0,0,0,0.2); color:white; border:1px solid var(--line); font-family:inherit; font-size:1rem; margin-bottom:8px;">
+              <option value="">General (Default)</option>
+              <option value="__NEW__">➕ Add New Chapter...</option>
+            </select>
+            <input type="text" id="capChapter" placeholder="New Chapter Name..." style="display:none;" />
           </div>
         </div>
 
         <div class="input-group">
           <label>Note Title (Optional)</label>
-          <input type="text" id="capTitle" placeholder="A catchy headline for this thought..." />
+          <input type="text" id="capTitle" placeholder="Leave blank to auto-generate a title..." />
         </div>
 
         <div class="row">
@@ -793,11 +798,25 @@
       }
     }
 
+    function toggleNewInput(selectId, inputId) {
+      const sel = document.getElementById(selectId);
+      const inp = document.getElementById(inputId);
+      inp.style.display = sel.value === "__NEW__" ? "block" : "none";
+      if (sel.value === "__NEW__") inp.focus();
+    }
+
     async function processCapture() {
       const text = document.getElementById("capText").value.trim();
-      const book = document.getElementById("capBook").value.trim();
-      const chapter = document.getElementById("capChapter").value.trim();
-      const title = document.getElementById("capTitle").value.trim();
+      
+      const bs = document.getElementById("capBookSelect").value;
+      const bc = document.getElementById("capBook").value.trim();
+      const book = (bs === "__NEW__" ? bc : bs) || "General";
+      
+      const cs = document.getElementById("capChapterSelect").value;
+      const cc = document.getElementById("capChapter").value.trim();
+      const chapter = (cs === "__NEW__" ? cc : cs) || "General";
+      
+      const title = document.getElementById("capTitle").value.trim() || "";
       
       if (!text && !capturedMedia) return;
 
@@ -833,6 +852,12 @@
         // Reset form
         document.getElementById("capText").value = "";
         document.getElementById("capTitle").value = "";
+        document.getElementById("capBook").value = "";
+        document.getElementById("capChapter").value = "";
+        document.getElementById("capBookSelect").value = "";
+        document.getElementById("capChapterSelect").value = "";
+        document.getElementById("capBook").style.display = "none";
+        document.getElementById("capChapter").style.display = "none";
         capturedMedia = null;
         document.getElementById("mediaPreview").style.display = "none";
         document.getElementById("cameraInput").value = "";
@@ -851,19 +876,27 @@
       try {
         const res = await fetch(`${API}/api/folders`);
         const data = await res.json();
-        const bl = document.getElementById("bookList");
-        const cl = document.getElementById("chapterList");
+        const bl = document.getElementById("capBookSelect");
+        const cl = document.getElementById("capChapterSelect");
         
         const books = new Set();
         const chapters = new Set();
         
         (data.folders || []).forEach(f => {
-          if (f.book_title) books.add(f.book_title);
-          if (f.chapter) chapters.add(f.chapter);
+          if (f.book_title && f.book_title !== "General") books.add(f.book_title);
+          if (f.chapter && f.chapter !== "General") chapters.add(f.chapter);
         });
         
-        bl.innerHTML = Array.from(books).map(b => `<option value="${b}">`).join('');
-        cl.innerHTML = Array.from(chapters).map(c => `<option value="${c}">`).join('');
+        const bHtml = `<option value="">General (Default)</option>` + 
+                      Array.from(books).map(b => `<option value="${b}">${b}</option>`).join('') + 
+                      `<option value="__NEW__">➕ Add New Book...</option>`;
+                      
+        const cHtml = `<option value="">General (Default)</option>` + 
+                      Array.from(chapters).map(c => `<option value="${c}">${c}</option>`).join('') + 
+                      `<option value="__NEW__">➕ Add New Chapter...</option>`;
+                      
+        bl.innerHTML = bHtml;
+        cl.innerHTML = cHtml;
       } catch (e) {
         console.error("Failed to load folders");
       }
