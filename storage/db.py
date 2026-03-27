@@ -125,6 +125,24 @@ def get_note(note_id: str) -> dict[str, Any] | None:
     return result.data[0] if result.data else None
 
 
+def get_note_by_path(book: str, chapter: str, title: str) -> dict[str, Any] | None:
+    # Handles Postgres "is null" syntax implicitly if we pass None, but for exact string equality this is sufficient.
+    q = _client().table("notes").select("id").eq("title", title)
+    
+    if book == "Uncategorized":
+        q = q.is_("book_title", "null")
+    else:
+        q = q.eq("book_title", book)
+        
+    if chapter == "General":
+        q = q.is_("chapter", "null")
+    else:
+        q = q.eq("chapter", chapter)
+        
+    result = q.limit(1).execute()
+    return result.data[0] if result.data else None
+
+
 def list_notes(
     limit: int = 20,
     offset: int = 0,

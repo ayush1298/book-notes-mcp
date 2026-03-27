@@ -1117,16 +1117,21 @@
     }
     
     async function shareCurrentNote() {
+      const parts = document.getElementById("modMeta").textContent.split(" / ");
+      const b = parts[0] ? parts[0].trim() : "Uncategorized";
+      const c = parts[1] ? parts[1].trim() : "General";
       const title = document.getElementById("modTitle").textContent;
       const text = document.getElementById("readView").innerText;
       
+      const shareUrl = window.location.origin + "/" + encodeURIComponent(b) + "/" + encodeURIComponent(c) + "/" + encodeURIComponent(title);
+      
       if (navigator.share) {
         try {
-          await navigator.share({ title: title, text: text });
+          await navigator.share({ title: title, text: text, url: shareUrl });
         } catch(e) { console.log(e); }
       } else {
-        navigator.clipboard.writeText(`${title}\n\n${text}`);
-        alert("Note copied to clipboard!");
+        navigator.clipboard.writeText(shareUrl);
+        alert("Link copied to clipboard!");
       }
     }
 
@@ -1197,6 +1202,30 @@
       
       btn.innerHTML = 'Search Brain';
     }
+
+    // --- Bootstrapper ---
+    async function init() {
+      await loadFolders();
+      
+      const parts = window.location.pathname.split('/').filter(Boolean);
+      if (parts.length === 3) {
+        const [book, chapter, title] = parts.map(decodeURIComponent);
+        try {
+          const res = await fetch(`${API}/api/notes/by_path?book=${encodeURIComponent(book)}&chapter=${encodeURIComponent(chapter)}&title=${encodeURIComponent(title)}`);
+          if (res.ok) {
+            const data = await res.json();
+            // Automatically switch to library and open the modal
+            switchTab('browse', document.querySelectorAll('.nav-btn')[1]);
+            await openNote(data.id);
+          } else {
+             // Handle 404 gracefully
+             console.log("Shared Note not found.");
+          }
+        } catch(e) { console.error("Error loading shared note:", e); }
+      }
+    }
+
+    window.onload = init;
   </script>
 </body>
 </html>

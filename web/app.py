@@ -231,14 +231,38 @@ def list_folders():
     except Exception as e:
         raise HTTPException(status_code=500, detail=str(e))
 
+@app.get("/api/notes/by_path")
+def resolve_note_path(book: str, chapter: str, title: str):
+    """Find a note's ID given its structured semantic path."""
+    from storage.db import get_note_by_path
+    try:
+        note = get_note_by_path(book, chapter, title)
+        if not note:
+            # Check without implicit nulls just in case they used actual text "General"
+            from storage.db import _client
+            res = _client().table("notes").select("id").eq("book_title", book).eq("chapter", chapter).eq("title", title).limit(1).execute()
+            if res.data:
+                return res.data[0]
+            raise HTTPException(status_code=404, detail="Note not found")
+        return note
+    except HTTPException:
+        raise
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=str(e))
+
 @app.get("/api/notes/{note_id}/link")
 def link_notes(note_id: str, limit: int = 5):
     """Find notes conceptually related to a given note."""
     from storage.db import link_notes as _link
     try:
-        return {"related": _link(note_id, limit=limit)}
+        return {"links": _link(note_id, limit)}
     except Exception as e:
         raise HTTPException(status_code=500, detail=str(e))
+
+@app.get("/{book}/{chapter}/{title}")
+def serve_shared_route(book: str, chapter: str, title: str):
+    """Catch-all for semantic URLs like /Atomic Habits/Chapter 1/My Insight"""
+    return FileResponse(str(_static_dir / "index.html"))
 
 
 @app.post("/api/webhook/keep")
