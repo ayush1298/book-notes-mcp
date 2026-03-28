@@ -1139,10 +1139,11 @@
       const text = document.getElementById("readView").innerText;
       
       const shareUrl = window.location.origin + "/" + encodeURIComponent(b) + "/" + encodeURIComponent(c) + "/" + encodeURIComponent(title);
+      const shareText = text + "\n\nLink: " + shareUrl;
       
       if (navigator.share) {
         try {
-          await navigator.share({ title: title, text: text, url: shareUrl });
+          await navigator.share({ title: title, text: shareText, url: shareUrl });
         } catch(e) { console.log(e); }
       } else {
         navigator.clipboard.writeText(shareUrl);
