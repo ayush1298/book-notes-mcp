@@ -145,6 +145,25 @@ def list_notes(tag: str | None = None, limit: int = 20):
         raise HTTPException(status_code=500, detail=str(e))
 
 
+@app.get("/api/notes/by_path")
+def resolve_note_path(book: str, chapter: str, title: str):
+    """Find a note's ID given its structured semantic path."""
+    from storage.db import get_note_by_path
+    try:
+        note = get_note_by_path(book, chapter, title)
+        if not note:
+            # Check without implicit nulls just in case they used actual text "General"
+            from storage.db import _client
+            res = _client().table("notes").select("id").eq("book_title", book).eq("chapter", chapter).eq("title", title).limit(1).execute()
+            if res.data:
+                return res.data[0]
+            raise HTTPException(status_code=404, detail="Note not found")
+        return note
+    except HTTPException:
+        raise
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=str(e))
+
 @app.get("/api/notes/{note_id}")
 def get_note(note_id: str):
     """Get a single note by ID."""
@@ -211,24 +230,6 @@ def list_folders():
     except Exception as e:
         raise HTTPException(status_code=500, detail=str(e))
 
-@app.get("/api/notes/by_path")
-def resolve_note_path(book: str, chapter: str, title: str):
-    """Find a note's ID given its structured semantic path."""
-    from storage.db import get_note_by_path
-    try:
-        note = get_note_by_path(book, chapter, title)
-        if not note:
-            # Check without implicit nulls just in case they used actual text "General"
-            from storage.db import _client
-            res = _client().table("notes").select("id").eq("book_title", book).eq("chapter", chapter).eq("title", title).limit(1).execute()
-            if res.data:
-                return res.data[0]
-            raise HTTPException(status_code=404, detail="Note not found")
-        return note
-    except HTTPException:
-        raise
-    except Exception as e:
-        raise HTTPException(status_code=500, detail=str(e))
 
 @app.get("/api/notes/{note_id}/link")
 def link_notes(note_id: str, limit: int = 5):
