@@ -1066,6 +1066,9 @@
         document.getElementById("modContent").classList.remove("edit-mode");
         document.getElementById("editBtn").textContent = "✏️ Edit";
         
+        const shareUrl = "/" + encodeURIComponent(b) + "/" + encodeURIComponent(c) + "/" + encodeURIComponent(note.title || "Untitled");
+        window.history.pushState({noteId: id}, '', shareUrl);
+        
       } catch (e) {
         content.innerHTML = `<div class="status-msg error">Failed to load note data.</div>`;
       }
@@ -1075,6 +1078,7 @@
       document.getElementById("readingModal").classList.remove("active");
       document.body.style.overflow = "auto";
       currentNoteId = null;
+      window.history.pushState({}, '', '/');
     }
 
     function toggleEditMode() {
