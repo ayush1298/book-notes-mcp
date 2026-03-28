@@ -620,12 +620,10 @@
         </div>
 
         <div class="row">
-          <button class="btn btn-secondary" onclick="document.getElementById('cameraInput').click()">📸 Photo OCR</button>
-          <button class="btn btn-secondary" id="recordBtn" onclick="toggleRecording()">🎙️ Transcribe</button>
-          <input type="file" id="cameraInput" accept="image/*" capture="environment" style="display: none;" onchange="handleImage(this)" />
+          <button class="btn btn-secondary" onclick="document.getElementById('cameraInput').click()">📸 Photo</button>
+          <button class="btn btn-secondary" id="recordBtn" onclick="toggleRecording()">🎙️ Audio</button>
+          <input type="file" id="cameraInput" accept="image/*" multiple style="display: none;" onchange="handleImage(this)" />
         </div>
-
-        <div id="mediaPreview"></div>
 
         <div class="input-group">
           <label>Raw Copy / Manual Entry</label>
@@ -752,15 +750,49 @@
     // --- Capture API ---
     let capturedMedia = null;
     let mediaRecorder = null;
-    let audioChunks = [];
-
-    function handleImage(input) {
-      if (input.files && input.files[0]) {
-        capturedMedia = input.files[0];
-        const mp = document.getElementById("mediaPreview");
-        mp.style.display = "block";
-        mp.textContent = `📎 Photo attached: ${capturedMedia.name}`;
+    async function handleMediaUpload(filesArray) {
+      if (!filesArray.length) return;
+      
+      const txtArea = document.getElementById("capText");
+      const processBtn = document.getElementById("processBtn");
+      const statusMsg = document.getElementById("processResult");
+      
+      processBtn.disabled = true;
+      document.getElementById("cameraInput").disabled = true;
+      document.getElementById("recordBtn").disabled = true;
+      statusMsg.innerHTML = `<div class="status-msg loading"><div class="spinner"></div> Extracting text from media...</div>`;
+      
+      try {
+        const formData = new FormData();
+        filesArray.forEach(f => formData.append("files", f));
+        
+        const res = await fetch(`${API}/api/extract_raw`, { method: "POST", body: formData });
+        const data = await res.json();
+        
+        if (!res.ok) throw new Error(data.detail || "Extraction failed");
+        
+        // Append to existing text
+        if (txtArea.value.trim()) {
+           txtArea.value += "\n\n--- Extracted ---\n\n" + data.extracted_text;
+        } else {
+           txtArea.value = data.extracted_text;
+        }
+        
+        statusMsg.innerHTML = `<div class="status-msg success">✓ Text extracted! Edit below before processing.</div>`;
+      } catch (e) {
+        statusMsg.innerHTML = `<div class="status-msg error">⚠ ${e.message}</div>`;
       }
+      
+      processBtn.disabled = false;
+      document.getElementById("cameraInput").disabled = false;
+      document.getElementById("recordBtn").disabled = false;
+      document.getElementById("cameraInput").value = "";
+    }
+
+    async function handleImage(input) {
+      if (!input.files || input.files.length === 0) return;
+      const files = Array.from(input.files);
+      await handleMediaUpload(files);
     }
 
     async function toggleRecording() {
@@ -782,12 +814,10 @@
           if (e.data.size > 0) audioChunks.push(e.data);
         };
 
-        mediaRecorder.onstop = () => {
-          capturedMedia = new Blob(audioChunks, { type: 'audio/webm' });
-          const mp = document.getElementById("mediaPreview");
-          mp.style.display = "block";
-          mp.textContent = `🎤 Audio attached (${(capturedMedia.size / 1024).toFixed(1)} KB)`;
+        mediaRecorder.onstop = async () => {
+          const audioBlob = new Blob(audioChunks, { type: 'audio/webm' });
           stream.getTracks().forEach(track => track.stop());
+          await handleMediaUpload([new File([audioBlob], 'recording.webm', {type: 'audio/webm'})]);
         };
 
         mediaRecorder.start();
@@ -818,7 +848,7 @@
       
       const title = document.getElementById("capTitle").value.trim() || "";
       
-      if (!text && !capturedMedia) return;
+      if (!text) return;
 
       const btn = document.getElementById("processBtn");
       btn.innerHTML = '<div class="spinner"></div> Working...';
@@ -826,23 +856,11 @@
       document.getElementById("processResult").innerHTML = `<div class="status-msg loading"><div class="spinner"></div> Extracting intelligence...</div>`;
 
       try {
-        let response;
-        if (capturedMedia) {
-          const formData = new FormData();
-          formData.append("file", capturedMedia, capturedMedia.type.includes('audio') ? 'recording.webm' : 'photo.jpg');
-          if (text) formData.append("text", text);
-          if (book) formData.append("book_title", book);
-          if (chapter) formData.append("chapter", chapter);
-          if (title) formData.append("title", title);
-
-          response = await fetch(`${API}/api/process_media`, { method: "POST", body: formData });
-        } else {
-          response = await fetch(`${API}/api/process`, {
-            method: "POST",
-            headers: { "Content-Type": "application/json" },
-            body: JSON.stringify({ raw_text: text, book_title: book || null, chapter: chapter || null, title: title || null })
-          });
-        }
+        const response = await fetch(`${API}/api/process`, {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ raw_text: text, book_title: book || null, chapter: chapter || null, title: title || null })
+        });
 
         const data = await response.json();
         if (!response.ok) throw new Error(data.detail || "Processing failed.");
@@ -858,9 +876,6 @@
         document.getElementById("capChapterSelect").value = "";
         document.getElementById("capBook").style.display = "none";
         document.getElementById("capChapter").style.display = "none";
-        capturedMedia = null;
-        document.getElementById("mediaPreview").style.display = "none";
-        document.getElementById("cameraInput").value = "";
         
         loadFolders(); // Refresh folders
       } catch (error) {

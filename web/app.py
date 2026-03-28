@@ -97,41 +97,21 @@ def process_note(req: ProcessRequest):
 
 
 @app.post("/api/process_media")
-async def process_media(
-    file: UploadFile = File(...),
-    text: str = Form(""),
-    source: str = Form("manual"),
-    book_title: str = Form(None),
-    chapter: str = Form(None),
-    title: str = Form(None)
-):
-    """Fallback endpoint for handling direct multimodal uploads (images/audio) from the PWA."""
+@app.post("/api/extract_raw")
+async def extract_raw(files: List[UploadFile] = File(...)):
+    """Extract raw text from a list of media files, returning it as a string without saving to DB."""
     try:
         from processing.media import extract_text_from_media
-        
-        media_bytes = await file.read()
-        extracted_text = extract_text_from_media(media_bytes, file.content_type)
-        
-        # Combine any typed notes with the extracted media text
-        final_text = text.strip()
-        if final_text:
-            final_text += f"\n\n--- Extracted from media ---\n\n{extracted_text}"
-        else:
-            final_text = extracted_text
-            
-        return ingest_note(
-            raw_text=final_text,
-            source=source,
-            book_title=book_title,
-            chapter=chapter,
-            title=title,
-        )
+        result = []
+        for file in files:
+            media_bytes = await file.read()
+            extracted_text = extract_text_from_media(media_bytes, file.content_type)
+            result.append(extracted_text)
+        return {"extracted_text": "\n\n".join(result)}
     except Exception as e:
         import traceback
         traceback.print_exc()
         raise HTTPException(status_code=500, detail=str(e))
-
-
 @app.post("/api/ask")
 def ask(req: AskRequest):
     """RAG: embed question → retrieve similar notes → synthesise answer."""
