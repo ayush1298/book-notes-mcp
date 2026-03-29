@@ -111,3 +111,10 @@ drop trigger if exists keep_synced_updated_at on keep_synced;
 create trigger keep_synced_updated_at
   before update on keep_synced
   for each row execute function update_keep_synced_at();
+
+CREATE TABLE IF NOT EXISTS reading_list (
+    id UUID PRIMARY KEY,
+    title TEXT NOT NULL,
+    link TEXT,
+    created_at TIMESTAMP WITH TIME ZONE DEFAULT NOW()
+);

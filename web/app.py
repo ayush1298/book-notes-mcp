@@ -188,6 +188,10 @@ class EditRequest(BaseModel):
     tags: list[str] | None = None
     actions: list[str] | None = None
 
+class QueueRequest(BaseModel):
+    title: str
+    link: str | None = None
+
 @app.put("/api/notes/{note_id}")
 def edit_note(note_id: str, req: EditRequest):
     """Update textual fields of a note."""
@@ -239,6 +243,80 @@ def link_notes(note_id: str, limit: int = 5):
         return {"links": _link(note_id, limit)}
     except Exception as e:
         raise HTTPException(status_code=500, detail=str(e))
+
+# --- Queue & Audio APIs ---
+
+@app.post("/api/queue")
+def add_queue_item(req: QueueRequest):
+    from storage.db import add_to_queue
+    try:
+        return add_to_queue(req.title, req.link)
+    except Exception as e:
+        raise HTTPException(500, detail=str(e))
+
+@app.get("/api/queue")
+def get_queue():
+    from storage.db import list_queue
+    try:
+        return {"items": list_queue()}
+    except Exception as e:
+        raise HTTPException(500, detail=str(e))
+
+@app.delete("/api/queue/{item_id}")
+def delete_queue(item_id: str):
+    from storage.db import delete_from_queue
+    try:
+        delete_from_queue(item_id)
+        return {"status": "deleted"}
+    except Exception as e:
+        raise HTTPException(500, detail=str(e))
+
+@app.get("/api/notes/{note_id}/audio")
+async def generate_note_audio(note_id: str):
+    from storage.db import get_note
+    from processing.summarizer import get_client
+    from google.genai import types
+    from fastapi.responses import Response
+    try:
+        note = get_note(note_id)
+        if not note:
+            raise HTTPException(404, "Note not found")
+            
+        prompt = (
+            f"Please convert the following note into an engaging, conversational podcast-style discussion. "
+            f"DO NOT generate any text, ONLY output the audio.\n\n"
+            f"Title: {note.get('title', 'Unknown')}\n"
+            f"Summary: {note.get('summary', '')}\n"
+            f"Ideas: {', '.join(note.get('ideas', []))}"
+        )
+        
+        client = get_client()
+        response = client.models.generate_content(
+            model='gemini-2.5-flash-preview-tts',
+            contents=prompt,
+            config=types.GenerateContentConfig(
+                response_modalities=["AUDIO"],
+            )
+        )
+        
+        for part in response.candidates[0].content.parts:
+            if part.inline_data:
+                # Wrap raw PCM in WAV header so browsers can play it naturally
+                pcm_bytes = part.inline_data.data
+                import wave, io
+                buf = io.BytesIO()
+                with wave.open(buf, 'wb') as wf:
+                    wf.setnchannels(1)
+                    wf.setsampwidth(2) # 16-bit PCM
+                    wf.setframerate(24000) # 24kHz standard
+                    wf.writeframes(pcm_bytes)
+                return Response(content=buf.getvalue(), media_type="audio/wav")
+                
+        raise ValueError("No audio data returned from Gemini")
+    except Exception as e:
+        import traceback
+        traceback.print_exc()
+        raise HTTPException(500, detail=str(e))
 
 @app.get("/{book}/{chapter}/{title}")
 def serve_shared_route(book: str, chapter: str, title: str):

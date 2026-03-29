@@ -678,6 +678,28 @@
         <div id="askResult"></div>
       </div>
     </main>
+
+    <!-- TO READ QUEUE TAB -->
+    <main class="panel" id="tab-queue">
+      <div class="panel-header">
+        <h2>To-Read Queue</h2>
+        <p>Books, articles, and resources you want to read next.</p>
+      </div>
+      
+      <div class="card" style="margin-bottom: 24px;">
+        <div class="row" style="margin-bottom: 8px;">
+           <label style="flex: 1">Resource Title</label>
+           <label style="flex: 1">External Link (optional)</label>
+        </div>
+        <div class="row">
+           <input type="text" id="qTitle" placeholder="e.g. Meditations by Marcus Aurelius" style="flex:1" />
+           <input type="text" id="qLink" placeholder="e.g. https://amazon.com/..." style="flex:1" />
+        </div>
+        <button class="btn btn-primary" style="width: 100%;" id="addQueueBtn" onclick="addQueue()">➕ Add to Queue</button>
+      </div>
+
+      <div id="queueContainer"></div>
+    </main>
   </div>
 
   <!-- READING MODAL -->
@@ -695,7 +717,13 @@
         <!-- Rendered via JS -->
       </div>
       
+      <!-- Audio Player Container -->
+      <div id="modAudioContainer" style="padding: 0 24px 16px 24px; display: none;">
+        <audio id="modAudio" controls style="width:100%; height: 36px;"></audio>
+      </div>
+      
       <div class="modal-actions">
+        <button class="btn btn-secondary" style="flex:1" id="listenBtn" onclick="playCurrentNoteAudio()">🎧 Listen</button>
         <button class="btn btn-secondary" style="flex:1" onclick="shareCurrentNote()">📤 Share</button>
         <button class="btn btn-secondary" style="flex:1" id="editBtn" onclick="toggleEditMode()">✏️ Edit</button>
         <button class="btn btn-danger" style="flex:1" onclick="deleteCurrentNote()">🗑️ Delete</button>
@@ -708,7 +736,8 @@
     <button class="nav-btn active" onclick="switchTab('capture', this)">✦ Capture</button>
     <button class="nav-btn" onclick="switchTab('browse', this)">📚 Library</button>
     <button class="nav-btn" onclick="switchTab('search', this)">🔍 Search</button>
-    <button class="nav-btn" onclick="switchTab('ask', this)">✨ Ask AI</button>
+    <button class="nav-btn" onclick="switchTab('ask', this)">✨ AI</button>
+    <button class="nav-btn" onclick="switchTab('queue', this)">🔖 Queue</button>
   </nav>
 
   <script>
@@ -730,6 +759,7 @@
       btn.classList.add('active');
       
       if (tabId === 'browse') loadLibrary();
+      if (tabId === 'queue') loadQueue();
     }
 
     // --- Globals & Initial loads ---
@@ -1077,6 +1107,12 @@
     function closeModal() {
       document.getElementById("readingModal").classList.remove("active");
       document.body.style.overflow = "auto";
+      
+      // Stop and hide audio if playing
+      const audioEl = document.getElementById("modAudio");
+      audioEl.pause();
+      document.getElementById("modAudioContainer").style.display = "none";
+      
       currentNoteId = null;
       window.history.pushState({}, '', '/');
     }
@@ -1221,6 +1257,106 @@
       }
       
       btn.innerHTML = 'Search Brain';
+    }
+
+    // --- Queue API ---
+    async function loadQueue() {
+      const container = document.getElementById("queueContainer");
+      container.innerHTML = '<div class="spinner"></div>';
+      try {
+        const res = await fetch(`${API}/api/queue`);
+        const data = await res.json();
+        let html = '';
+        if(data.items.length === 0) {
+           html = `<div class="status-msg">Your queue is empty. Added books and articles will appear here.</div>`;
+        } else {
+           html = '<div class="note-grid">';
+           data.items.forEach(item => {
+             const linkHtml = item.link ? `<a href="${item.link}" target="_blank" style="color:var(--primary); font-size:0.85rem; display:block; margin-top:8px;">🔗 Open Link</a>` : '';
+             html += `
+             <div class="note-card" style="display:flex; justify-content:space-between; align-items:flex-start;">
+               <div style="flex:1">
+                 <h3 style="margin:0; font-size:1.1rem; font-weight:600; color:var(--ink)">${item.title}</h3>
+                 ${linkHtml}
+               </div>
+               <button class="btn btn-secondary" style="padding: 8px 12px; margin-left:12px; font-size:0.85rem;" onclick="deleteQueue('${item.id}')">✓ Done</button>
+             </div>`;
+           });
+           html += '</div>';
+        }
+        container.innerHTML = html;
+      } catch (e) {
+        container.innerHTML = `<div class="status-msg error">Failed to load queue.</div>`;
+      }
+    }
+
+    async function addQueue() {
+      const titleEl = document.getElementById("qTitle");
+      const linkEl = document.getElementById("qLink");
+      const title = titleEl.value.trim();
+      const link = linkEl.value.trim();
+      
+      if(!title) return alert("Please enter a title.");
+      
+      const btn = document.getElementById("addQueueBtn");
+      btn.innerHTML = 'Working...';
+      btn.disabled = true;
+      
+      try {
+        await fetch(`${API}/api/queue`, {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ title, link })
+        });
+        titleEl.value = "";
+        linkEl.value = "";
+        await loadQueue();
+      } catch(e) { alert("Failed to add."); }
+      
+      btn.innerHTML = '➕ Add to Queue';
+      btn.disabled = false;
+    }
+
+    async function deleteQueue(id) {
+      if(!confirm("Mark this item as complete and remove from Queue?")) return;
+      try {
+        await fetch(`${API}/api/queue/${id}`, { method: "DELETE" });
+        await loadQueue();
+      } catch(e) {}
+    }
+
+    // --- Audio TTS API ---
+    async function playCurrentNoteAudio() {
+      if(!currentNoteId) return;
+      const btn = document.getElementById("listenBtn");
+      const audioContainer = document.getElementById("modAudioContainer");
+      const audioEl = document.getElementById("modAudio");
+      
+      if(audioContainer.style.display === "block") {
+         audioEl.pause();
+         audioContainer.style.display = "none";
+         btn.innerHTML = "🎧 Listen";
+         return;
+      }
+      
+      btn.innerHTML = '<div class="spinner"></div> Generating Audio...';
+      
+      try {
+        const response = await fetch(`${API}/api/notes/${currentNoteId}/audio`);
+        if(!response.ok) throw new Error("Audio generation failed");
+        
+        const blob = await response.blob();
+        const url = URL.createObjectURL(blob);
+        
+        audioEl.src = url;
+        audioContainer.style.display = "block";
+        audioEl.play();
+        
+        btn.innerHTML = '🔇 Stop listening';
+      } catch(e) {
+        alert("Failed to generate audio summary. Ensure Gemini model allows TTS.");
+        btn.innerHTML = '🎧 Listen';
+      }
     }
 
     // --- Bootstrapper ---

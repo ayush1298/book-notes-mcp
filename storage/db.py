@@ -200,3 +200,23 @@ def search_similar(
         },
     ).execute()
     return result.data or []
+
+
+def add_to_queue(title: str, link: str | None = None) -> dict:
+    from uuid import uuid4
+    payload = {
+        "id": str(uuid4()),
+        "title": title,
+        "link": link
+    }
+    res = _client().table("reading_list").insert(payload).execute()
+    return res.data[0]
+
+
+def list_queue() -> list:
+    res = _client().table("reading_list").select("*").order("created_at", desc=True).execute()
+    return res.data
+
+
+def delete_from_queue(queue_id: str):
+    _client().table("reading_list").delete().eq("id", queue_id).execute()
