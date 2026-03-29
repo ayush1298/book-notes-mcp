@@ -274,9 +274,11 @@ def delete_queue(item_id: str):
 @app.get("/api/notes/{note_id}/audio")
 async def generate_note_audio(note_id: str):
     from storage.db import get_note
-    from processing.summarizer import get_client
+    from google import genai
     from google.genai import types
     from fastapi.responses import Response
+    import os
+    
     try:
         note = get_note(note_id)
         if not note:
@@ -290,7 +292,7 @@ async def generate_note_audio(note_id: str):
             f"Ideas: {', '.join(note.get('ideas', []))}"
         )
         
-        client = get_client()
+        client = genai.Client(api_key=os.environ.get("GEMINI_API_KEY"))
         response = client.models.generate_content(
             model='gemini-2.5-flash-preview-tts',
             contents=prompt,
