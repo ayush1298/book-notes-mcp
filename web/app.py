@@ -101,7 +101,7 @@ def process_note(req: ProcessRequest):
 @app.post("/api/process_media")
 @app.post("/api/extract_raw")
 async def extract_raw(
-    files: List[UploadFile] = File(...),
+    files: list[UploadFile] = File(...),
     save_images: bool = Form(False)
 ):
     """Extract raw text from a list of media files, optionally returning hosted image paths."""
