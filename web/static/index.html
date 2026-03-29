@@ -620,9 +620,11 @@
         </div>
 
         <div class="row" style="margin-bottom: 12px;">
-          <button class="btn btn-secondary" onclick="document.getElementById('cameraInput').click()">📸 Photo</button>
+          <button class="btn btn-secondary" onclick="document.getElementById('cameraInputCapture').click()">📸 Camera</button>
+          <button class="btn btn-secondary" onclick="document.getElementById('cameraInputGallery').click()">🖼️ Upload</button>
           <button class="btn btn-secondary" id="recordBtn" onclick="toggleRecording()">🎙️ Audio</button>
-          <input type="file" id="cameraInput" accept="image/*" multiple style="display: none;" onchange="handleImage(this)" />
+          <input type="file" id="cameraInputCapture" accept="image/*" capture="environment" style="display: none;" onchange="handleImage(this)" />
+          <input type="file" id="cameraInputGallery" accept="image/*" multiple style="display: none;" onchange="handleImage(this)" />
         </div>
         
         <div style="margin-bottom: 20px; font-size: 0.9rem;">
@@ -796,7 +798,8 @@
       const statusMsg = document.getElementById("processResult");
       
       processBtn.disabled = true;
-      document.getElementById("cameraInput").disabled = true;
+      document.getElementById("cameraInputCapture").disabled = true;
+      document.getElementById("cameraInputGallery").disabled = true;
       document.getElementById("recordBtn").disabled = true;
       statusMsg.innerHTML = `<div class="status-msg loading"><div class="spinner"></div> Extracting text from media...</div>`;
       
@@ -830,9 +833,11 @@
       }
       
       processBtn.disabled = false;
-      document.getElementById("cameraInput").disabled = false;
+      document.getElementById("cameraInputCapture").disabled = false;
+      document.getElementById("cameraInputGallery").disabled = false;
       document.getElementById("recordBtn").disabled = false;
-      document.getElementById("cameraInput").value = "";
+      document.getElementById("cameraInputCapture").value = "";
+      document.getElementById("cameraInputGallery").value = "";
     }
 
     async function handleImage(input) {

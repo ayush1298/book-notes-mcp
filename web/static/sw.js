@@ -1,4 +1,4 @@
-const CACHE_NAME = 'booknotes-v4';
+const CACHE_NAME = 'booknotes-v5';
 const ASSETS = [
   '/',
   '/static/index.html',
