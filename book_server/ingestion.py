@@ -15,6 +15,7 @@ def ingest_note(
     chapter: str | None = None,
     title: str | None = None,
     existing_note_id: str | None = None,
+    image_urls: list[str] | None = None,
 ) -> dict[str, Any]:
     """
     Process raw text and either create a new note or update an existing one.
@@ -59,6 +60,7 @@ def ingest_note(
             ideas=processed.get("ideas"),
             tags=processed.get("tags"),
             actions=processed.get("actions"),
+            image_urls=image_urls,
         )
         created_at = None
 

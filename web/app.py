@@ -60,6 +60,7 @@ class ProcessRequest(BaseModel):
     book_title: str | None = None
     chapter: str | None = None
     title: str | None = None
+    image_urls: list[str] = []
 
 class AskRequest(BaseModel):
     question: str
@@ -91,6 +92,7 @@ def process_note(req: ProcessRequest):
             book_title=req.book_title,
             chapter=req.chapter,
             title=req.title,
+            image_urls=req.image_urls,
         )
     except Exception as e:
         raise HTTPException(status_code=500, detail=str(e))
@@ -98,16 +100,29 @@ def process_note(req: ProcessRequest):
 
 @app.post("/api/process_media")
 @app.post("/api/extract_raw")
-async def extract_raw(files: List[UploadFile] = File(...)):
-    """Extract raw text from a list of media files, returning it as a string without saving to DB."""
+async def extract_raw(
+    files: List[UploadFile] = File(...),
+    save_images: bool = Form(False)
+):
+    """Extract raw text from a list of media files, optionally returning hosted image paths."""
     try:
         from processing.media import extract_text_from_media
         result = []
+        image_urls = []
         for file in files:
             media_bytes = await file.read()
             extracted_text = extract_text_from_media(media_bytes, file.content_type)
             result.append(extracted_text)
-        return {"extracted_text": "\n\n".join(result)}
+            
+            if save_images and file.content_type and file.content_type.startswith("image/"):
+                from storage.db import upload_image_to_storage
+                try:
+                    path = upload_image_to_storage(media_bytes, file.filename or "upload.jpg", file.content_type)
+                    image_urls.append(path)
+                except Exception as e:
+                    print(f"Failed to upload image {file.filename}: {e}")
+
+        return {"extracted_text": "\n\n".join(result), "image_urls": image_urls}
     except Exception as e:
         import traceback
         traceback.print_exc()

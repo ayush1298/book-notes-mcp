@@ -23,6 +23,19 @@ def _client() -> Client:
 
 # ── Write ──────────────────────────────────────────────────────────────────
 
+def upload_image_to_storage(file_bytes: bytes, filename: str, content_type: str = "image/jpeg") -> str:
+    """Upload an image to the private Supabase bucket and return its path."""
+    import time
+    path = f"{int(time.time())}_{filename}"
+    res = _client().storage.from_("book_notes_images").upload(
+        file=file_bytes,
+        path=path,
+        file_options={"content-type": content_type}
+    )
+    # the response is usually an object or dict, if successful it didn't throw.
+    return path
+
+
 def insert_note(
     raw_text: str,
     source: str = "manual",
@@ -33,6 +46,7 @@ def insert_note(
     ideas: list[str] | None = None,
     tags: list[str] | None = None,
     actions: list[str] | None = None,
+    image_urls: list[str] | None = None,
 ) -> str:
     """Insert a note and return its UUID string."""
     row = {
@@ -45,6 +59,7 @@ def insert_note(
         "ideas": ideas or [],
         "tags": tags or [],
         "actions": actions or [],
+        "image_urls": image_urls or [],
     }
     result = _client().table("notes").insert(row).execute()
     return result.data[0]["id"]
@@ -120,9 +135,29 @@ def content_hash(text: str) -> str:
 
 # ── Read ───────────────────────────────────────────────────────────────────
 
+def _attach_signed_urls(note: dict[str, Any] | None) -> dict[str, Any] | None:
+    if not note: return note
+    urls = note.get("image_urls")
+    if urls and isinstance(urls, list):
+        client = _client()
+        signed = []
+        for path in urls:
+            try:
+                # Returns {'signedURL': '...'} or string, based on SDK version
+                res = client.storage.from_("book_notes_images").create_signed_url(path, 3600)
+                if isinstance(res, dict) and "signedURL" in res:
+                    signed.append(res["signedURL"])
+                elif isinstance(res, dict) and "signedUrl" in res:
+                    signed.append(res["signedUrl"])
+                elif isinstance(res, str):
+                    signed.append(res)
+            except: pass
+        note["signed_image_urls"] = signed
+    return note
+
 def get_note(note_id: str) -> dict[str, Any] | None:
     result = _client().table("notes").select("*").eq("id", note_id).execute()
-    return result.data[0] if result.data else None
+    return _attach_signed_urls(result.data[0]) if result.data else None
 
 
 def get_note_by_path(book: str, chapter: str, title: str) -> dict[str, Any] | None:
