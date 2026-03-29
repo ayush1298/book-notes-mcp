@@ -644,6 +644,9 @@
         <button class="btn btn-primary" style="width: 100%;" id="processBtn" onclick="processCapture()">
           Process & Organise ✦
         </button>
+        <button class="btn btn-secondary" style="width: 100%; margin-top: 8px; color: var(--error);" id="clearBtn" onclick="clearCaptureForm()">
+          🗑️ Clear Form
+        </button>
 
         <div id="processResult"></div>
       </div>
@@ -1000,6 +1003,20 @@
 
       btn.innerHTML = 'Process & Organise ✦';
       btn.disabled = false;
+    }
+
+    function clearCaptureForm() {
+      if(!confirm("Are you sure you want to clear your current note draft?")) return;
+      document.getElementById("capText").value = "";
+      document.getElementById("capTitle").value = "";
+      document.getElementById("capBook").value = "";
+      document.getElementById("capChapter").value = "";
+      document.getElementById("capBookSelect").value = "";
+      document.getElementById("capChapterSelect").value = "";
+      document.getElementById("capBook").style.display = "none";
+      document.getElementById("capChapter").style.display = "none";
+      document.getElementById("processResult").innerHTML = "";
+      capturedImagePaths = [];
     }
 
     // --- Library API ---
