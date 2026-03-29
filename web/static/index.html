@@ -12,6 +12,8 @@
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
   <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600;700;800&display=swap" rel="stylesheet" />
   
+  <link href="https://cdnjs.cloudflare.com/ajax/libs/cropperjs/1.5.13/cropper.min.css" rel="stylesheet" />
+  
   <style>
     *, *::before, *::after { box-sizing: border-box; }
 
@@ -624,7 +626,7 @@
           <button class="btn btn-secondary" onclick="document.getElementById('cameraInputGallery').click()">🖼️ Upload</button>
           <button class="btn btn-secondary" id="recordBtn" onclick="toggleRecording()">🎙️ Audio</button>
           <input type="file" id="cameraInputCapture" accept="image/*" capture="environment" style="display: none;" onchange="handleImage(this)" />
-          <input type="file" id="cameraInputGallery" accept="image/*" multiple style="display: none;" onchange="handleImage(this)" />
+          <input type="file" id="cameraInputGallery" accept="image/*" style="display: none;" onchange="handleImage(this)" />
         </div>
         
         <div style="margin-bottom: 20px; font-size: 0.9rem;">
@@ -740,6 +742,17 @@
     </div>
   </div>
 
+  <!-- CROP OVERLAY -->
+  <div id="cropOverlay" style="display:none; position:fixed; top:0; left:0; width:100%; height:100%; background:#000; z-index:9999; flex-direction:column;">
+    <div style="flex:1; width:100%; height:calc(100vh - 80px); overflow:hidden;">
+      <img id="cropImage" style="max-width:100%; display:block;">
+    </div>
+    <div style="padding:16px; display:flex; gap:12px; background:#18181b; height: 80px; align-items: center; border-top: 1px solid var(--line);">
+      <button class="btn btn-secondary" style="flex:1;" onclick="cancelCrop()">Cancel</button>
+      <button class="btn btn-primary" style="flex:2;" onclick="confirmCrop()">Extract Area ✨</button>
+    </div>
+  </div>
+
   <!-- BOTTOM NAVIGATION -->
   <nav class="bottom-nav">
     <button class="nav-btn active" onclick="switchTab('capture', this)">✦ Capture</button>
@@ -840,10 +853,61 @@
       document.getElementById("cameraInputGallery").value = "";
     }
 
+    let cropperInstance = null;
+
     async function handleImage(input) {
       if (!input.files || input.files.length === 0) return;
-      const files = Array.from(input.files);
-      await handleMediaUpload(files);
+      const file = input.files[0]; // Crop workflow processes one image at a time
+      
+      const reader = new FileReader();
+      reader.onload = (e) => {
+        document.getElementById("cropOverlay").style.display = "flex";
+        const img = document.getElementById("cropImage");
+        img.src = e.target.result;
+        
+        if (cropperInstance) cropperInstance.destroy();
+        
+        // Wait for image swap before initializing cropper
+        setTimeout(() => {
+            cropperInstance = new Cropper(img, {
+              viewMode: 1,
+              autoCropArea: 0.95,
+              dragMode: 'crop'
+            });
+        }, 100);
+      };
+      reader.readAsDataURL(file);
+      
+      // Clear input so selecting same file works again
+      input.value = "";
+    }
+
+    function cancelCrop() {
+      document.getElementById("cropOverlay").style.display = "none";
+      if (cropperInstance) cropperInstance.destroy();
+      cropperInstance = null;
+    }
+
+    function confirmCrop() {
+      if (!cropperInstance) return cancelCrop();
+      
+      const btn = document.querySelector("#cropOverlay .btn-primary");
+      btn.innerHTML = `<div class="spinner"></div>`;
+      btn.disabled = true;
+      
+      // Generate the cropped blob efficiently
+      cropperInstance.getCroppedCanvas({
+        maxWidth: 2048,
+        maxHeight: 2048
+      }).toBlob(async (blob) => {
+        cancelCrop();
+        btn.innerHTML = `Extract Area ✨`;
+        btn.disabled = false;
+        
+        // Pass cropped blob directly into extraction pipeline
+        const croppedFile = new File([blob], "cropped.jpg", { type: "image/jpeg" });
+        await handleMediaUpload([croppedFile]);
+      }, "image/jpeg", 0.9);
     }
 
     async function toggleRecording() {
@@ -1417,5 +1481,6 @@
 
     window.onload = init;
   </script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/cropperjs/1.5.13/cropper.min.js"></script>
 </body>
 </html>
