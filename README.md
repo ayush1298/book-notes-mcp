@@ -1,4 +1,5 @@
 # book-notes-mcp
+[![MCP Badge](https://lobehub.com/badge/mcp/ayush1298-book-notes-mcp)](https://lobehub.com/mcp/ayush1298-book-notes-mcp)
 
 `book-notes-mcp` is a personal reading system for turning messy capture into usable notes.
 
